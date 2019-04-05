@@ -495,6 +495,17 @@ bool WalkingModule::updateModule()
                 return false;
             }
 
+//calling the setPlannerInput method at each step of walking for resetting the unicycle planner
+
+        if (m_mergePoints.front() == 21 && desiredUnicyclePosition == nullptr) {//checking that is the time of evaluating the new trajectory and also the Joystick is not active
+
+            if(!setPlannerInput(m_desiredPosition(0) ,m_desiredPosition(1)))
+            {
+                yError() << "[updateModule] Unable to recall the setplannerInput (when terminal (SetGoal) instead of JoyStick is used)";
+                return false;
+            }
+        }
+
         // if a new trajectory is required check if its the time to evaluate the new trajectory or
         // the time to attach new one
         if(m_newTrajectoryRequired)
