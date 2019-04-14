@@ -125,6 +125,7 @@ bool WalkingModule::configure(yarp::os::ResourceFinder& rf)
     m_useQPIK = rf.check("use_QP-IK", yarp::os::Value(false)).asBool();
     m_useOSQP = rf.check("use_osqp", yarp::os::Value(false)).asBool();
     m_dumpData = rf.check("dump_data", yarp::os::Value(false)).asBool();
+    m_useStepAdaptation = rf.check("use_step_adaptator ", yarp::os::Value(false)).asBool();
 
     yarp::os::Bottle& generalOptions = rf.findGroup("GENERAL");
     m_dT = generalOptions.check("sampling_time", yarp::os::Value(0.016)).asDouble();
@@ -184,6 +185,20 @@ bool WalkingModule::configure(yarp::os::ResourceFinder& rf)
         yError() << "[configure] Unable to initialize the planner.";
         return false;
     }
+
+
+    if(m_useStepAdaptation)
+        {
+            // initialize the step adaptation
+            m_stepAdaptator = std::make_unique<StepAdaptator>();
+            yarp::os::Bottle& stepAdaptatorOptions = rf.findGroup("STEP_ADAPTATOR");
+            stepAdaptatorOptions.append(generalOptions);
+            if(!m_stepAdaptator->initialize(stepAdaptatorOptions))
+            {
+                yError() << "[configure] Unable to initialize the controller.";
+                return false;
+            }
+        }
 
     if(m_useMPC)
     {
@@ -330,6 +345,11 @@ void WalkingModule::reset()
 
     if(m_dumpData)
         m_walkingLogger->quit();
+
+    if(m_useStepAdaptation)
+            m_stepAdaptator->reset();
+
+
 }
 
 bool WalkingModule::close()
@@ -607,7 +627,40 @@ bool WalkingModule::updateModule()
             return false;
         }
 
-        // DCM controller
+
+
+        // Step Adaptator
+               iDynTree::Vector6 adaptedStepParameters;
+               if(m_useStepAdaptation)
+               {
+
+       //            m_profiler->setInitTime("MPC");
+
+                   if(!m_stepAdaptator->solve())
+                   {
+                       yError() << "[updateModule] Unable to solve the QP problem of step adaptation.";
+                       return false;
+                   }
+
+
+                   if(!m_stepAdaptator->solve())
+                   {
+                       yError() << "[updateModule] Unable to solve the QP problem of step adaptation.";
+                       return false;
+                   }
+
+                   if(!m_stepAdaptator->getControllerOutput(adaptedStepParameters))
+                   {
+                       yError() << "[updateModule] Unable to get the step adaptation output.";
+                       return false;
+                   }
+
+        //           m_profiler->setEndTime("MPC");///////////////////////////////////////////////////////////////////
+               }
+
+
+
+               // DCM controller
         iDynTree::Vector2 desiredZMP;
         if(m_useMPC)
         {

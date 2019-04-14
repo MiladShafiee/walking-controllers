@@ -42,6 +42,8 @@ set(${EXE_TARGET_NAME}_SRC
   src/WalkingPIDHandler.cpp
   src/WalkingLogger.cpp
   src/TimeProfiler.cpp
+  src/QPSolver.cpp
+  src/StepAdaptator.cpp
   )
 
 # set hpp files
@@ -62,6 +64,8 @@ set(${EXE_TARGET_NAME}_HDR
   include/WalkingLogger.hpp
   include/WalkingLogger.tpp
   include/TimeProfiler.hpp
+  include/QPSolver.hpp
+  include/StepAdaptator.hpp
   )
 
 # add include directories to the build.

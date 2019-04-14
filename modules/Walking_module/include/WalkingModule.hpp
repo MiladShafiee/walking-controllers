@@ -37,6 +37,7 @@
 #include <WalkingPIDHandler.hpp>
 #include <WalkingLogger.hpp>
 #include <TimeProfiler.hpp>
+#include <StepAdaptator.hpp>
 
 // iCub-ctrl
 #include <iCub/ctrl/filters.h>
@@ -61,6 +62,7 @@ class WalkingModule: public yarp::os::RFModule, public WalkingCommands
     bool m_useQPIK; /**< True if the QP-IK is used. */
     bool m_useOSQP; /**< True if osqp is used to QP-IK problem. */
     bool m_dumpData; /**< True if data are saved. */
+    bool m_useStepAdaptation;/**< True if the step adaptation is used. */
 
     std::unique_ptr<RobotHelper> m_robotControlHelper; /**< Robot control helper. */
     std::unique_ptr<TrajectoryGenerator> m_trajectoryGenerator; /**< Pointer to the trajectory generator object. */
@@ -75,6 +77,7 @@ class WalkingModule: public yarp::os::RFModule, public WalkingCommands
     std::unique_ptr<WalkingPIDHandler> m_PIDHandler; /**< Pointer to the PID handler object. */
     std::unique_ptr<WalkingLogger> m_walkingLogger; /**< Pointer to the Walking Logger object. */
     std::unique_ptr<TimeProfiler> m_profiler; /**< Time profiler. */
+    std::unique_ptr<StepAdaptator> m_stepAdaptator; /**< Pointer to the step adaptation object. */
 
     double m_additionalRotationWeightDesired; /**< Desired additional rotational weight matrix. */
     double m_desiredJointsWeight; /**< Desired joint weight matrix. */
