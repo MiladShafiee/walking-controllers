@@ -450,6 +450,7 @@ bool WalkingModule::updateModule()
 
     if(m_robotState == WalkingFSM::Preparing)
     {
+                    indexmilad=0;
         bool motionDone = false;
         if(!m_robotControlHelper->checkMotionDone(motionDone))
         {
@@ -627,16 +628,62 @@ bool WalkingModule::updateModule()
             return false;
         }
 
+               double switchOverSwingRatio;
+               double comHeight;
+               double stepTiming;
+               double sigma;
+               double nextStepPosition;
+               double stepLength;
+               double nominalDCMOffset;
+               iDynTree::Vector4 nominalValues;
+               iDynTree::Vector3 currentValues;
+           if(!m_trajectoryGenerator->getNominalCoMHeight(comHeight)){
+               yError() << "[updateModule] Unable to get the nominal CoM height!";
+               return false;
+           }
 
+           if(!m_trajectoryGenerator->getSwitchOverSwingRatio(switchOverSwingRatio)){
+               yError() << "[updateModule] Unable to get the ratio of double support to single support!";
+               return false;
+           }
+             indexmilad=indexmilad+1;
+           std::shared_ptr<FootPrint> jleftFootprints= m_trajectoryGenerator->getLeftFootprint();
+           std::shared_ptr<FootPrint> jrightFootprints= m_trajectoryGenerator->getRightFootprint();
+           StepList jLeftstepList=jleftFootprints->getSteps();
+           StepList jRightstepList=jrightFootprints->getSteps();
+           std::vector<StepPhase> jleftFootPhases;
+           std::vector<StepPhase> jRightFootPhases;
+           m_trajectoryGenerator->getStepPhases(jleftFootPhases,jRightFootPhases);
 
-        // Step Adaptator
+          //yInfo()<<m_mergePoints.size()<<jLeftstepList.size()<<jRightstepList.size();
+           if (2==static_cast<int>(jRightFootPhases[indexmilad]) && jrightFootprints->numberOfSteps()>1) {
+   //jRightstepList.at(1).impactTime;
+   //            yInfo()<<"asgharrrrrrrrrrrrrrrrrrrr";
+   //yInfo()<<"milllllllllllllllllllllaaaaaa"<<jLeftstepList.at(0).impactTime<<jLeftstepList.at(0).impactTime<<jLeftstepList.at(0).impactTime<<jLeftstepList.at(0).impactTime<<jLeftstepList.at(0).impactTime;
+   //            yInfo()<<"akbarrrrrrrrrrrrrrrrrrrr";
+
+   //            yInfo()<<"asgharrrrrrrrrrrrrrrrrrrr";
+   //yInfo()<<"milllllllllllllllllllllaaaaaa"<<jRightstepList.at(1).impactTime<<jRightstepList.at(1).impactTime<<jRightstepList.at(1).impactTime<<jRightstepList.at(1).impactTime<<jRightstepList.at(1).impactTime;
+   //            yInfo()<<"akbarrrrrrrrrrrrrrrrrrrr";
+   stepTiming=(jRightstepList.at(1).impactTime-jLeftstepList.at(0).impactTime)/(1+switchOverSwingRatio);
+                sigma=exp((9.81/comHeight)*stepTiming);
+                nextStepPosition=jRightstepList.at(1).position(0);
+                stepLength=(jRightstepList.at(1).position(0)-jLeftstepList.at(0).position(0));
+                nominalDCMOffset=stepLength/(exp((9.81/comHeight)*stepTiming)-1);
+               // Step Adaptator
                iDynTree::Vector6 adaptedStepParameters;
+               currentValues(0)=measuredZMP(0);
+               currentValues(1)=measuredDCM(0);
+               currentValues(2)=0;
+
+               nominalValues(0)=nextStepPosition;
+               nominalValues(1)=sigma;
+               nominalValues(2)=nominalDCMOffset;
+               nominalValues(3)=m_DCMPositionDesired[m_mergePoints.front()](0);
                if(m_useStepAdaptation)
                {
 
-       //            m_profiler->setInitTime("MPC");
-
-                   if(!m_stepAdaptator->solve())
+                   if(!m_stepAdaptator->RunStepAdaptator(nominalValues,currentValues))
                    {
                        yError() << "[updateModule] Unable to solve the QP problem of step adaptation.";
                        return false;
@@ -655,10 +702,54 @@ bool WalkingModule::updateModule()
                        return false;
                    }
 
-        //           m_profiler->setEndTime("MPC");///////////////////////////////////////////////////////////////////
                }
+           }
+           else{
+          //     yInfo()<<"this is not right SS";
+           }
 
+           if ((2==static_cast<int>(jleftFootPhases[indexmilad])) && jleftFootprints->numberOfSteps()>1) {
 
+               stepTiming=(jLeftstepList.at(1).impactTime-jRightstepList.at(0).impactTime)/(1+switchOverSwingRatio);
+               sigma=exp((9.81/comHeight)*stepTiming);
+               nextStepPosition=jLeftstepList.at(1).position(0);
+               stepLength=(jLeftstepList.at(1).position(0)-jRightstepList.at(0).position(0));
+              nominalDCMOffset=stepLength/(exp((9.81/comHeight)*stepTiming)-1);
+   //            // Step Adaptator
+               iDynTree::Vector6 adaptedStepParameters;
+               currentValues(0)=measuredZMP(0);
+               currentValues(1)=measuredDCM(0);
+               currentValues(2)=0;
+
+               nominalValues(0)=nextStepPosition;
+               nominalValues(1)=sigma;
+               nominalValues(2)=nominalDCMOffset;
+               nominalValues(3)=m_DCMPositionDesired[m_mergePoints.front()](0);
+
+               if(m_useStepAdaptation)
+               {
+                   if(!m_stepAdaptator->RunStepAdaptator(nominalValues,currentValues))
+                   {
+                       yError() << "[updateModule] Unable to solve the QP problem of step adaptation.";
+                       return false;
+                   }
+
+                   if(!m_stepAdaptator->solve())
+                   {
+                       yError() << "[updateModule] Unable to solve the QP problem of step adaptation.";
+                       return false;
+                   }
+
+                   if(!m_stepAdaptator->getControllerOutput(adaptedStepParameters))
+                   {
+                       yError() << "[updateModule] Unable to get the step adaptation output.";
+                       return false;
+                   }
+               }
+           }
+           else{
+           //    yInfo()<<"this is not left SS";
+           }
 
                // DCM controller
         iDynTree::Vector2 desiredZMP;

@@ -95,13 +95,14 @@ bool TrajectoryGenerator::configurePlanner(const yarp::os::Searchable& config)
     double landingVelocity = config.check("stepLandingVelocity", yarp::os::Value(0.0)).asDouble();
     double apexTime = config.check("footApexTime", yarp::os::Value(0.5)).asDouble();
     double comHeight = config.check("com_height", yarp::os::Value(0.49)).asDouble();
+    m_nominalCoMHeight=comHeight;
     double comHeightDelta = config.check("comHeightDelta", yarp::os::Value(0.01)).asDouble();
     double nominalDuration = config.check("nominalDuration", yarp::os::Value(4.0)).asDouble();
     double lastStepSwitchTime = config.check("lastStepSwitchTime", yarp::os::Value(0.5)).asDouble();
     double switchOverSwingRatio = config.check("switchOverSwingRatio",
                                                yarp::os::Value(0.4)).asDouble();
+    m_switchOverSwingRatio=switchOverSwingRatio;
     double mergePointRatio = config.check("mergePointRatio", yarp::os::Value(0.5)).asDouble();
-
     m_nominalWidth = config.check("nominalWidth", yarp::os::Value(0.04)).asDouble();
 
     m_swingLeft = config.check("swingLeft", yarp::os::Value(true)).asBool();
@@ -620,3 +621,29 @@ void TrajectoryGenerator::reset()
     // change the state of the generator
     m_generatorState = GeneratorState::FirstStep;
 }
+
+bool TrajectoryGenerator::getSwitchOverSwingRatio(double& switchOverSwingRatio){
+switchOverSwingRatio=m_switchOverSwingRatio;
+return true;
+}
+
+bool TrajectoryGenerator::getStepPhases(std::vector<StepPhase> &leftPhases, std::vector<StepPhase> &rightPhases){
+    m_trajectoryGenerator.getStepPhases(leftPhases,rightPhases);
+}
+
+std::shared_ptr<FootPrint> TrajectoryGenerator::getLeftFootprint(){
+return m_trajectoryGenerator.getLeftFootPrint();
+}
+
+std::shared_ptr<FootPrint> TrajectoryGenerator::getRightFootprint(){
+return m_trajectoryGenerator.getRightFootPrint();
+}
+
+bool TrajectoryGenerator::getNominalCoMHeight(double& nominalCoMHeight){
+
+nominalCoMHeight=m_nominalCoMHeight;
+return true;
+
+}
+
+

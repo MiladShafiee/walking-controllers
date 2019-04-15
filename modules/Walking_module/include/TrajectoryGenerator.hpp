@@ -37,9 +37,9 @@ class TrajectoryGenerator
     std::shared_ptr<CoMHeightTrajectoryGenerator> m_heightGenerator;
     std::shared_ptr<FeetGenerator> m_feetGenerator;
     bool m_useMinimumJerk;
-
+    double m_nominalCoMHeight;
     bool m_swingLeft; /**< True if the first swing foot is the left. */
-
+    double m_switchOverSwingRatio;
     double m_dT; /**< Sampling time of the planner. */
     double m_plannerHorizon; /**< Horizon of the planner. */
 
@@ -104,7 +104,7 @@ public:
      * @return true/false in case of success/failure.
      */
     bool generateFirstTrajectories(const iDynTree::Transform &leftToRightTransform);
-                                   // const iDynTree::Position &initialCOMPosition);
+    // const iDynTree::Position &initialCOMPosition);
 
     /**
      * Update the trajectory.
@@ -215,6 +215,47 @@ public:
      * Reset the planner
      */
     void reset();
+    /**
+           * Get the ratio of double support to single support
+           * @param switchOverSwingRatio returning ratio of double support to single support .........
+           * @return true/false in case of success/failure.
+           */
+    bool getSwitchOverSwingRatio(double &switchOverSwingRatio);
+    /**
+               * Get the Nominal CoM height trajectory for omega calculation
+               * @param nominalCoMHeight returning nominal CoM height .........
+               * @return true/false in case of success/failure.
+               */
+    bool getNominalCoMHeight(double &nominalCoMHeight);
+
+    /**
+             * Get the phases of each foot during walking from unicycle
+             * @param leftPhases vector containing all the phases that left foot experience.
+             * @param rightPhases vector containing all the phases that right foot experience.
+             * @return true/false in case of success/failure.
+             */
+    bool getStepPhases(std::vector<StepPhase> &leftPhases, std::vector<StepPhase> &rightPhases);
+
+    /**
+             * Get the phases of each foot during walking from unicycle
+             * @param leftFootPrint vector containing .........
+             * @param rightFootPrint vector containing  .........
+             * @return true/false in case of success/failure.
+             */
+    std::shared_ptr<FootPrint> getLeftFootprint();
+
+    /**
+              * Get the phases of each foot during walking from unicycle
+              * @param leftFootPrint vector containing .........
+              * @param rightFootPrint vector containing  .........
+              * @return true/false in case of success/failure.
+              */
+    std::shared_ptr<FootPrint> getRightFootprint();
+
+
+
 };
+
+
 
 #endif
