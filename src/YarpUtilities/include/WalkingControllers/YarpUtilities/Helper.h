@@ -128,6 +128,7 @@ namespace WalkingControllers
          * @param strings list containing all the string.
          */
         void populateBottleWithStrings(yarp::os::Bottle& bottle, const std::initializer_list<std::string>& strings);
+
         /**
          * Get Vector of boolean from searchable.
          * @param config is the searchable object;

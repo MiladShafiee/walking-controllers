@@ -123,7 +123,8 @@ void YarpUtilities::populateBottleWithStrings(yarp::os::Bottle& bottle, const st
         bottle.addString(string);
 }
 
-bool YarpUtilities::getVectorOfBooleanFromSearchable(const yarp::os::Searchable& config,const std::string& key,std::vector <bool> & output){
+bool YarpUtilities::getVectorOfBooleanFromSearchable(const yarp::os::Searchable& config,const std::string& key,std::vector <bool> & output)
+{
     yarp::os::Value* valuePtr;
     if(!config.check(key, valuePtr))
     {
@@ -131,7 +132,7 @@ bool YarpUtilities::getVectorOfBooleanFromSearchable(const yarp::os::Searchable&
         return false;
     }
 
-     yarp::os::Value value=*valuePtr;
+    yarp::os::Value value=*valuePtr;
     yarp::os::Bottle *inputPtr = value.asList();
 
     if (inputPtr->size() != output.size())
@@ -141,14 +142,15 @@ bool YarpUtilities::getVectorOfBooleanFromSearchable(const yarp::os::Searchable&
         return false;
     }
 
-    for (int i = 0; i < inputPtr->size(); i++)
+    for (unsigned int i = 0; i < inputPtr->size(); i++)
     {
         if (!inputPtr->get(i).isBool())
         {
             yError() << "[getVectorOfBooleanFromSearchable] The input is expected to be boolean";
             return false;
         }
-        output.at(i) = inputPtr->get(i).asBool();
+        output[i]= inputPtr->get(i).asBool();
     }
+
     return true;
 }

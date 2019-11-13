@@ -64,7 +64,7 @@ namespace WalkingControllers
         iDynTree::VectorDynSize m_jointVelocitiesBounds; /**< Joint Velocity bounds [rad/s]. */
         iDynTree::VectorDynSize m_jointPositionsUpperBounds; /**< Joint Position upper bound [rad]. */
         iDynTree::VectorDynSize m_jointPositionsLowerBounds; /**< Joint Position lower bound [rad]. */
-         std::vector <bool> m_isJointModeStiffVector;
+         std::vector<yarp::dev::InteractionModeEnum> m_isJointModeStiffVector;/**< Joint is in the stiff or compliance mode */
         // yarp::sig::Vector m_positionFeedbackDegFiltered;
         yarp::sig::Vector m_velocityFeedbackDegFiltered; /**< Vector containing the filtered joint velocity [deg/s]. */
         std::unique_ptr<iCub::ctrl::FirstOrderLowPassFilter> m_positionFilter; /**< Joint position low pass filter .*/
@@ -208,6 +208,12 @@ namespace WalkingControllers
         int getActuatedDoFs();
 
         WalkingPIDHandler& getPIDHandler();
+
+        /**
+         * Set the intraction mode of the joints(stiff/compliant).
+         * @return true in case of success and false otherwise.
+         */
+        bool setInteractionMode();
     };
 };
 #endif

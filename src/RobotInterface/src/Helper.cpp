@@ -187,13 +187,26 @@ bool RobotInterface::configureRobot(const yarp::os::Searchable& config)
 
     m_actuatedDOFs = m_axesList.size();
 
-m_isJointModeStiffVector.resize(m_actuatedDOFs);
-    if(!YarpUtilities::getVectorOfBooleanFromSearchable(config,"joint_is_stiff_mode",m_isJointModeStiffVector))
+    m_isJointModeStiffVector.resize(m_actuatedDOFs);
+    std::vector<bool>  modes;
+    modes.resize(m_actuatedDOFs);
+    if(!YarpUtilities::getVectorOfBooleanFromSearchable(config,"joint_is_stiff_mode",modes))
     {
         yError() << "[RobotInterface::configureRobot] Unable to find joint_is_stiff_mode into config file.";
         return false;
     }
 
+    for (unsigned int i=0;i<m_actuatedDOFs;i++)
+    {
+        if(modes[i])
+        {
+            m_isJointModeStiffVector.at(i)=yarp::dev::InteractionModeEnum::VOCAB_IM_STIFF;
+        }
+        else
+        {
+            m_isJointModeStiffVector.at(i)=yarp::dev::InteractionModeEnum::VOCAB_IM_COMPLIANT;
+        }
+    }
 
     // open the device
     if(!m_robotDevice.open(options))
@@ -240,10 +253,10 @@ m_isJointModeStiffVector.resize(m_actuatedDOFs);
     }
 
     if(!m_robotDevice.view(m_InteractionInterface) || !m_InteractionInterface)
-        {
+    {
              yError() << "[configureRobot] Cannot obtain IInteractionMode interface";
             return false;
-         }
+    }
 
     // resize the buffers
     m_positionFeedbackDeg.resize(m_actuatedDOFs, 0.0);
@@ -504,21 +517,6 @@ bool RobotInterface::setPositionReferences(const iDynTree::VectorDynSize& desire
             return false;
         }
         m_controlMode = VOCAB_CM_POSITION;
-
-        std::vector<yarp::dev::InteractionModeEnum>  modes;
-        std::vector<int>  jointsIndex;
-        for (int i=0;i<m_actuatedDOFs;i++) {
-            jointsIndex.at(i)=i;
-            if(m_isJointModeStiffVector.at(i)==true){
-            modes.at(i)=yarp::dev::InteractionModeEnum::VOCAB_IM_STIFF;
-            }
-            else {
-            modes.at(i)=yarp::dev::InteractionModeEnum::VOCAB_IM_COMPLIANT;
-            }
-        }
-
-        m_InteractionInterface->setInteractionModes(m_actuatedDOFs,jointsIndex.data(),modes.data());
-
     }
 
     m_positioningTime = positioningTimeSec;
@@ -791,4 +789,15 @@ int RobotInterface::getActuatedDoFs()
 WalkingPIDHandler& RobotInterface::getPIDHandler()
 {
     return *m_PIDHandler;
+}
+
+bool RobotInterface::setInteractionMode()
+{
+    if(!m_InteractionInterface->setInteractionModes(m_isJointModeStiffVector.data()))
+    {
+        yError() << "[RobotInterface::setInteractionMode] Error while setting the interaction modes of the joints";
+        return false;
+    }
+
+    return true;
 }
