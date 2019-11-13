@@ -198,6 +198,7 @@ bool RobotInterface::configureRobot(const yarp::os::Searchable& config)
 
     for (unsigned int i=0;i<m_actuatedDOFs;i++)
     {
+        m_JointModeStiffVectorDefult.at(i)=yarp::dev::InteractionModeEnum::VOCAB_IM_STIFF;
         if(modes[i])
         {
             m_isJointModeStiffVector.at(i)=yarp::dev::InteractionModeEnum::VOCAB_IM_STIFF;
@@ -733,6 +734,7 @@ bool RobotInterface::close()
     m_leftWrenchPort.close();
     switchToControlMode(VOCAB_CM_POSITION);
     m_controlMode = VOCAB_CM_POSITION;
+    m_InteractionInterface->setInteractionModes(m_JointModeStiffVectorDefult.data());
     if(!m_robotDevice.close())
     {
         yError() << "[RobotInterface::close] Unable to close the device.";

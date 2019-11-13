@@ -65,6 +65,7 @@ namespace WalkingControllers
         iDynTree::VectorDynSize m_jointPositionsUpperBounds; /**< Joint Position upper bound [rad]. */
         iDynTree::VectorDynSize m_jointPositionsLowerBounds; /**< Joint Position lower bound [rad]. */
          std::vector<yarp::dev::InteractionModeEnum> m_isJointModeStiffVector;/**< Joint is in the stiff or compliance mode */
+         std::vector<yarp::dev::InteractionModeEnum> m_JointModeStiffVectorDefult;/**< All the joints are in the stiff  mode */
         // yarp::sig::Vector m_positionFeedbackDegFiltered;
         yarp::sig::Vector m_velocityFeedbackDegFiltered; /**< Vector containing the filtered joint velocity [deg/s]. */
         std::unique_ptr<iCub::ctrl::FirstOrderLowPassFilter> m_positionFilter; /**< Joint position low pass filter .*/
