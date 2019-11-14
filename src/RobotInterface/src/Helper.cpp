@@ -188,6 +188,7 @@ bool RobotInterface::configureRobot(const yarp::os::Searchable& config)
     m_actuatedDOFs = m_axesList.size();
 
     m_isJointModeStiffVector.resize(m_actuatedDOFs);
+    m_JointModeStiffVectorDefult.resize(m_actuatedDOFs);
     std::vector<bool>  modes;
     modes.resize(m_actuatedDOFs);
     if(!YarpUtilities::getVectorOfBooleanFromSearchable(config,"joint_is_stiff_mode",modes))
