@@ -321,7 +321,7 @@ bool WalkingModule::configure(yarp::os::ResourceFinder& rf)
     // resize variables
     m_qDesired.resize(m_robotControlHelper->getActuatedDoFs());
     m_dqDesired.resize(m_robotControlHelper->getActuatedDoFs());
-
+m_dqDesired.zero();
     yInfo() << "[WalkingModule::configure] Ready to play!";
 
     return true;
@@ -593,7 +593,12 @@ bool WalkingModule::updateModule()
             yError() << "[WalkingModule::updateModule] Unable to update the FK solver.";
             return false;
         }
-
+        yInfo()<<m_qDesired.toString()<<m_dqDesired.toString();
+        if(!m_FKSolver->setInternalRobotState(m_qDesired, m_dqDesired))
+        {
+            yError() << "[WalkingModule::updateModule] Unable to set the internal robot state.";
+            return false;
+        }
         if(!evaluateZMP(measuredZMP))
         {
             yError() << "[WalkingModule::updateModule] Unable to evaluate the ZMP.";
@@ -743,6 +748,12 @@ bool WalkingModule::updateModule()
                 return false;
             }
 
+            if(!m_FKSolver->setInternalRobotState(m_qDesired, m_dqDesired))
+            {
+                yError() << "[WalkingModule::updateModule] Unable to set the internal robot state.";
+                return false;
+            }
+
         }
         else
         {
@@ -787,7 +798,9 @@ bool WalkingModule::updateModule()
             errorR = m_QPIKSolver->getRightFootError();
             errorL = m_QPIKSolver->getLeftFootError();
         }
-
+iDynTree::Vector2 torsoRoll;
+torsoRoll(0)=m_robotControlHelper->getJointPosition()(14);
+torsoRoll(1)=m_qDesired(14);
         // send data to the WalkingLogger
         if(m_dumpData)
         {
@@ -807,7 +820,7 @@ bool WalkingModule::updateModule()
                                       rightFoot.getPosition(), rightFoot.getRotation().asRPY(),
                                       m_leftTrajectory.front().getPosition(), m_leftTrajectory.front().getRotation().asRPY(),
                                       m_rightTrajectory.front().getPosition(), m_rightTrajectory.front().getRotation().asRPY(),
-                                      errorL, errorR);
+                                      errorL, errorR,torsoRoll);
         }
 
         propagateTime();
@@ -1183,7 +1196,7 @@ bool WalkingModule::startWalking()
                     "lf_err_x", "lf_err_y", "lf_err_z",
                     "lf_err_roll", "lf_err_pitch", "lf_err_yaw",
                     "rf_err_x", "rf_err_y", "rf_err_z",
-                    "rf_err_roll", "rf_err_pitch", "rf_err_yaw"});
+                    "rf_err_roll", "rf_err_pitch", "rf_err_yaw","torso_roll_real","torso_roll_des"});
     }
 
     // if the robot was only prepared the filters has to be reseted
