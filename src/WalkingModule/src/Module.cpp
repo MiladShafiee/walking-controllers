@@ -382,7 +382,7 @@ bool WalkingModule::solveQPIK(const std::unique_ptr<WalkingQPIK>& solver, const 
     bool stancePhase = iDynTree::toEigen(m_DCMVelocityDesired.front()).norm() < threshold;
     solver->setPhase(stancePhase);
 
-    ok &= solver->setRobotState(m_robotControlHelper->getJointPosition(),
+    ok &= solver->setRobotState(m_qDesired,
                                 m_FKSolver->getLeftFootToWorldTransform(),
                                 m_FKSolver->getRightFootToWorldTransform(),
                                 m_FKSolver->getLeftHandToWorldTransform(),
