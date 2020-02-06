@@ -799,8 +799,10 @@ bool WalkingModule::updateModule()
             errorL = m_QPIKSolver->getLeftFootError();
         }
 iDynTree::Vector2 torsoRoll;
-torsoRoll(0)=m_robotControlHelper->getJointPosition()(14);
-torsoRoll(1)=m_qDesired(14);
+torsoRoll(0)=m_robotControlHelper->getJointPosition()(1);
+torsoRoll(1)=m_qDesired(1);
+//torsoRoll(0)=m_robotControlHelper->getJointPosition()(14);
+//torsoRoll(1)=m_qDesired(14);
         // send data to the WalkingLogger
         if(m_dumpData)
         {
