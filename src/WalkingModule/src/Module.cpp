@@ -593,12 +593,12 @@ bool WalkingModule::updateModule()
             yError() << "[WalkingModule::updateModule] Unable to update the FK solver.";
             return false;
         }
-        yInfo()<<m_qDesired.toString()<<m_dqDesired.toString();
-        if(!m_FKSolver->setInternalRobotState(m_qDesired, m_dqDesired))
-        {
-            yError() << "[WalkingModule::updateModule] Unable to set the internal robot state.";
-            return false;
-        }
+//        yInfo()<<m_qDesired.toString()<<m_dqDesired.toString();
+//        if(!m_FKSolver->setInternalRobotState(m_qDesired, m_dqDesired))
+//        {
+//            yError() << "[WalkingModule::updateModule] Unable to set the internal robot state.";
+//            return false;
+//        }
         if(!evaluateZMP(measuredZMP))
         {
             yError() << "[WalkingModule::updateModule] Unable to evaluate the ZMP.";
@@ -748,11 +748,11 @@ bool WalkingModule::updateModule()
                 return false;
             }
 
-            if(!m_FKSolver->setInternalRobotState(m_qDesired, m_dqDesired))
-            {
-                yError() << "[WalkingModule::updateModule] Unable to set the internal robot state.";
-                return false;
-            }
+//            if(!m_FKSolver->setInternalRobotState(m_qDesired, m_dqDesired))
+//            {
+//                yError() << "[WalkingModule::updateModule] Unable to set the internal robot state.";
+//                return false;
+//            }
 
         }
         else
