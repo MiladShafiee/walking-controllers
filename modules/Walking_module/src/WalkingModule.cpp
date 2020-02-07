@@ -486,7 +486,7 @@ bool WalkingModule::solveQPIK(const std::unique_ptr<WalkingQPIK>& solver, const 
     tempRightFoot.setRotation(m_rightFootRotationFromIMU);
 
 
-    ok &= solver->setRobotState(m_robotControlHelper->getJointPosition(),
+    ok &= solver->setRobotState(m_qDesired,
                                 m_FKSolver->getLeftFootToWorldTransform(),
                                 m_FKSolver->getRightFootToWorldTransform(),
                                 m_FKSolver->getLeftHandToWorldTransform(),
@@ -920,8 +920,8 @@ bool WalkingModule::updateModule()
         double miladTempR=0;
         if (m_useStepAdaptation) {
             if(m_robotControlHelper->isHeadIMUUsed() || m_robotControlHelper->isPelvisIMUUsed()){
-                if (/*(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1)))*/abs(m_qDesired(14)-m_robotControlHelper->getJointPosition()(14))>m_stepAdaptator->getRollPitchErrorThreshold()(1) ) {
-                    miladTempP=m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1);
+                if (/*(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1)))*/abs(m_qDesired(3)-m_robotControlHelper->getJointPosition()(3))>m_stepAdaptator->getRollPitchErrorThreshold()(1) ) {
+                    miladTempP=m_FKSolver->getHeadToWorldTransform().getRotation().asRPY()(1);//getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1);
                     m_isPitchActive=1;
 
                     //miladTemp=0;
@@ -930,9 +930,9 @@ bool WalkingModule::updateModule()
                     miladTempP=0;
                 }
 
-                if ( /*(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0)))*/ abs(m_qDesired(15)-m_robotControlHelper->getJointPosition()(15))>m_stepAdaptator->getRollPitchErrorThreshold()(0)) {
+                if ( /*(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0)))*/ abs(m_qDesired(4)-m_robotControlHelper->getJointPosition()(4))>m_stepAdaptator->getRollPitchErrorThreshold()(0)) {
 
-                    miladTempR=m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0);
+                    miladTempR=(m_qDesired(4)-m_robotControlHelper->getJointPosition()(4));//m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0);
                     m_isRollActive=1;
                 }
                 else {
@@ -1554,11 +1554,11 @@ bool WalkingModule::updateModule()
             m_isRollPitchActiveVec(0)=m_isRollActive;
             m_isRollPitchActiveVec(1)=m_isPitchActive;
             iDynTree::Vector4 rollPitchTorso;
-            rollPitchTorso(0)=m_robotControlHelper->getJointPosition()(14);
-            rollPitchTorso(1)=m_robotControlHelper->getJointPosition()(15);
+            rollPitchTorso(0)=m_robotControlHelper->getJointPosition()(3);
+            rollPitchTorso(1)=m_robotControlHelper->getJointPosition()(4);
 
-            rollPitchTorso(2)=m_qDesired(14);
-            rollPitchTorso(3)=m_qDesired(15);
+            rollPitchTorso(2)=m_qDesired(3);
+            rollPitchTorso(3)=m_qDesired(4);
 
             m_walkingLogger->sendData(m_FKSolver->getDCM(), m_DCMPositionDesired.front(),DCMError, m_DCMVelocityDesired.front(),m_DCMPositionAdjusted.front(),
                                       measuredZMP, desiredZMP, m_FKSolver->getCoMPosition(),
