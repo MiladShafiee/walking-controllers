@@ -918,10 +918,15 @@ bool WalkingModule::updateModule()
         pelvisOrientation=iDynTree::Rotation::Identity();
         double miladTempP=0;
         double miladTempR=0;
+        double jointsError=0;
+        for (int var = 0; var < m_robotControlHelper->getActuatedDoFs(); var++) {
+            jointsError=jointsError+ abs(m_qDesired(var)-m_robotControlHelper->getJointPosition()(var));
+        }
+
         if (m_useStepAdaptation) {
             if(m_robotControlHelper->isHeadIMUUsed() || m_robotControlHelper->isPelvisIMUUsed()){
-                if (/*(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1)))*/abs(m_qDesired(3)-m_robotControlHelper->getJointPosition()(3))>m_stepAdaptator->getRollPitchErrorThreshold()(1) ) {
-                    miladTempP=m_FKSolver->getHeadToWorldTransform().getRotation().asRPY()(1);//getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1);
+                if (/*(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1)))*/jointsError>m_stepAdaptator->getRollPitchErrorThreshold()(1) ) {
+                    miladTempP=jointsError;/*m_FKSolver->getHeadToWorldTransform().getRotation().asRPY()(1);*///getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1);
                     m_isPitchActive=1;
 
                     //miladTemp=0;
@@ -930,9 +935,9 @@ bool WalkingModule::updateModule()
                     miladTempP=0;
                 }
 
-                if ( /*(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0)))*/ abs(m_qDesired(4)-m_robotControlHelper->getJointPosition()(4))>m_stepAdaptator->getRollPitchErrorThreshold()(0)) {
+                if ( /*(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0)))*/ jointsError>m_stepAdaptator->getRollPitchErrorThreshold()(0)) {
 
-                    miladTempR=(m_qDesired(4)-m_robotControlHelper->getJointPosition()(4));//m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0);
+                    miladTempR=jointsError;/*(m_qDesired(4)-m_robotControlHelper->getJointPosition()(4));*///m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0);
                     m_isRollActive=1;
                 }
                 else {
@@ -1553,12 +1558,13 @@ bool WalkingModule::updateModule()
             iDynTree::Vector2 m_isRollPitchActiveVec;
             m_isRollPitchActiveVec(0)=m_isRollActive;
             m_isRollPitchActiveVec(1)=m_isPitchActive;
-            iDynTree::Vector4 rollPitchTorso;
+            iDynTree::Vector6 rollPitchTorso;
             rollPitchTorso(0)=m_robotControlHelper->getJointPosition()(3);
             rollPitchTorso(1)=m_robotControlHelper->getJointPosition()(4);
 
             rollPitchTorso(2)=m_qDesired(3);
             rollPitchTorso(3)=m_qDesired(4);
+            rollPitchTorso(4)=jointsError;
 
             m_walkingLogger->sendData(m_FKSolver->getDCM(), m_DCMPositionDesired.front(),DCMError, m_DCMVelocityDesired.front(),m_DCMPositionAdjusted.front(),
                                       measuredZMP, desiredZMP, m_FKSolver->getCoMPosition(),
@@ -2084,7 +2090,7 @@ bool WalkingModule::startWalking()
                                       "yaw_des","IsRollActive","IsPitchActive","dcm_smoothed_x","dcm_smoothed_y","rf_smoothed_x","rf_smoothed_y","rf_smoothed_z","lf_smoothed_x","lf_smoothed_y","lf_smoothed_z","lf_smoothed_dx","lf_smoothed_dy","lf_smoothed_dz","lf_des_dx", "lf_des_dy", "lf_des_dz","lf_adapted_dx","lf_adapted_dy","lf_adapted_dz",
                                       "lfoot_imu_roll", "lfoot_imu_pitch", "lfoot_imu_yaw",
                                       "rfoot_imu_roll", "rfoot_imu_pitch", "rfoot_imu_yaw","l_imu_roll", "l_imu_pitch", "l_imu_yaw",
-                                      "r_imu_roll", "r_imu_pitch", "r_imu_yaw","torso_pitch_real", "torso_roll_real", "torso_pitch_des","torso_roll_des"});
+                                      "r_imu_roll", "r_imu_pitch", "r_imu_yaw","torso_pitch_real", "torso_roll_real", "torso_pitch_des","torso_roll_des","joints_error","nothing"});
     }
 
     if(m_robotState == WalkingFSM::Prepared)
