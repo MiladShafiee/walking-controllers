@@ -920,9 +920,11 @@ bool WalkingModule::updateModule()
         double miladTempR=0;
         double jointsError=0;
         for (int var = 0; var < m_robotControlHelper->getActuatedDoFs(); var++) {
+       if(var==10 || var ==11 || var==12 || var==13){
             jointsError=jointsError+ abs(m_qDesired(var)-m_robotControlHelper->getJointPosition()(var));
+            }
         }
-
+jointsError=jointsError+0.1;
         if (m_useStepAdaptation) {
             if(m_robotControlHelper->isHeadIMUUsed() || m_robotControlHelper->isPelvisIMUUsed()){
                 if (/*(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1)))*/jointsError>m_stepAdaptator->getRollPitchErrorThreshold()(1) ) {
@@ -937,7 +939,7 @@ bool WalkingModule::updateModule()
 
                 if ( /*(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0)))*/ jointsError>m_stepAdaptator->getRollPitchErrorThreshold()(0)) {
 
-                    miladTempR=jointsError;/*(m_qDesired(4)-m_robotControlHelper->getJointPosition()(4));*///m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0);
+                    miladTempR=-1*jointsError;/*(m_qDesired(4)-m_robotControlHelper->getJointPosition()(4));*///m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0);
                     m_isRollActive=1;
                 }
                 else {
