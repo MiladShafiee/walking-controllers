@@ -70,53 +70,54 @@ namespace WalkingControllers
         double m_stepHeight;
         double m_startOfWalkingTime;
 
-       double m_tempCoP;
-       double m_tempDCM;
-       iDynTree::VectorFixSize<5> m_nominalValuesLeft;
-       iDynTree::VectorFixSize<5> m_nominalValuesRight;
-       iDynTree::Vector3 m_currentValues;
+        iDynTree::Vector2 m_dcmEstimatedI;
+        double m_tempCoP;
+        double m_tempDCM;
+        iDynTree::VectorFixSize<5> m_nominalValuesLeft;
+        iDynTree::VectorFixSize<5> m_nominalValuesRight;
+        iDynTree::Vector3 m_currentValues;
 
-       std::vector<std::shared_ptr<GeneralSupportTrajectory>> m_DCMSubTrajectories;
+        std::vector<std::shared_ptr<GeneralSupportTrajectory>> m_DCMSubTrajectories;
 
-       iDynTree::Transform m_adaptatedFootLeftTransform;
-       iDynTree::Transform m_adaptatedFootRightTransform;
-       iDynTree::Twist m_adaptatedFootRightTwist;
-       iDynTree::Twist m_adaptatedFootLeftTwist;
-       iDynTree::SpatialAcc m_adaptatedFootLeftAcceleration;
-       iDynTree::SpatialAcc m_adaptatedFootRightAcceleration;
-       iDynTree::Vector3 m_leftAdaptedStepParameters;
-       iDynTree::Vector3 m_rightAdaptedStepParameters;
+        iDynTree::Transform m_adaptatedFootLeftTransform;
+        iDynTree::Transform m_adaptatedFootRightTransform;
+        iDynTree::Twist m_adaptatedFootRightTwist;
+        iDynTree::Twist m_adaptatedFootLeftTwist;
+        iDynTree::SpatialAcc m_adaptatedFootLeftAcceleration;
+        iDynTree::SpatialAcc m_adaptatedFootRightAcceleration;
+        iDynTree::Vector3 m_leftAdaptedStepParameters;
+        iDynTree::Vector3 m_rightAdaptedStepParameters;
 
-       iDynTree::Transform m_currentFootLeftTransform;
-       iDynTree::Transform m_currentFootRightTransform;
-       iDynTree::Twist m_currentFootLeftTwist;
-       iDynTree::Twist m_currentFootRightTwist;
-       iDynTree::SpatialAcc m_currentFootLeftAcceleration;
-       iDynTree::SpatialAcc m_currentFootRightAcceleration;
+        iDynTree::Transform m_currentFootLeftTransform;
+        iDynTree::Transform m_currentFootRightTransform;
+        iDynTree::Twist m_currentFootLeftTwist;
+        iDynTree::Twist m_currentFootRightTwist;
+        iDynTree::SpatialAcc m_currentFootLeftAcceleration;
+        iDynTree::SpatialAcc m_currentFootRightAcceleration;
 
-       std::shared_ptr<FootPrint> m_jleftFootprints;
-       std::shared_ptr<FootPrint> m_jRightFootprints;
+        std::shared_ptr<FootPrint> m_jleftFootprints;
+        std::shared_ptr<FootPrint> m_jRightFootprints;
 
-       StepList m_jLeftstepList;
-       StepList m_jRightstepList;
+        StepList m_jLeftstepList;
+        StepList m_jRightstepList;
 
-       double m_isPushActive;
-       double m_isRollActive;
-       double m_isPitchActive;
-       int m_pushRecoveryActiveIndex;
-       double m_kDCMSmoother;
-       double m_kFootSmoother;
-       int m_indexSmoother;
-       int m_indexFootSmoother;
-       int m_timeIndexAfterPushDetection;
-       int m_FootTimeIndexAfterPushDetection;
-       iDynTree::Vector2 m_errorOfLastDCMPushDetection;
+        double m_isPushActive;
+        double m_isRollActive;
+        double m_isPitchActive;
+        int m_pushRecoveryActiveIndex;
+        double m_kDCMSmoother;
+        double m_kFootSmoother;
+        int m_indexSmoother;
+        int m_indexFootSmoother;
+        int m_timeIndexAfterPushDetection;
+        int m_FootTimeIndexAfterPushDetection;
+        iDynTree::Vector2 m_errorOfLastDCMPushDetection;
 
-       iDynTree::Transform m_smoothedFootLeftTransform;
-       iDynTree::Twist m_smoothedFootLeftTwist;
-       iDynTree::Transform m_smoothedFootRightTransform;
-       iDynTree::Twist m_smoothedFootRightTwist;
-       iDynTree::Vector2  m_DCMPositionSmoothed;
+        iDynTree::Transform m_smoothedFootLeftTransform;
+        iDynTree::Twist m_smoothedFootLeftTwist;
+        iDynTree::Transform m_smoothedFootRightTransform;
+        iDynTree::Twist m_smoothedFootRightTwist;
+        iDynTree::Vector2  m_DCMPositionSmoothed;
 
         std::deque<iDynTree::Vector2> m_CurrentDCMPositionAdjusted; /**< Deque containing the desired DCM position. */
         std::deque<iDynTree::Vector2> m_CurrentDCMVelocityAdjusted; /**< Deque containing the desired DCM position. */
