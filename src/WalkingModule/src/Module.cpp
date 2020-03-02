@@ -50,7 +50,7 @@ bool WalkingModule::advanceReferenceSignals()
        || m_leftInContact.empty()
        || m_rightInContact.empty()
        || m_DCMPositionDesired.empty()
-//       || m_ZMPPositionDesired.empty()
+       || m_ZMPPositionDesired.empty()
        || m_DCMPositionAdjusted.empty()
        || m_DCMVelocityAdjusted.empty()
        || m_DCMVelocityDesired.empty()
@@ -93,8 +93,8 @@ bool WalkingModule::advanceReferenceSignals()
     m_comHeightVelocity.pop_front();
     m_comHeightVelocity.push_back(m_comHeightVelocity.back());
 
-//    m_ZMPPositionDesired.pop_front();
-//    m_ZMPPositionDesired.push_back(m_ZMPPositionDesired.back());
+    m_ZMPPositionDesired.pop_front();
+    m_ZMPPositionDesired.push_back(m_ZMPPositionDesired.back());
 
     if (m_useStepAdaptation)
     {
@@ -669,7 +669,7 @@ bool WalkingModule::updateModule()
         if(m_newTrajectoryRequired)
         {
             // when we are near to the merge point the new trajectory is evaluated
-            if(m_newTrajectoryMergeCounter == 20)
+            if(m_newTrajectoryMergeCounter == 10)
             {
 
                 double initTimeTrajectory;
@@ -824,7 +824,7 @@ bool WalkingModule::updateModule()
 
                     if (jointsError>m_stepAdapter->getRollPitchErrorThreshold()(0)) {
 
-                        miladTempR=-1*jointsError;/*(m_qDesired(4)-m_robotControlHelper->getJointPosition()(4));*///m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0);
+                        miladTempR=1*jointsError;/*(m_qDesired(4)-m_robotControlHelper->getJointPosition()(4));*///m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0);
                         m_isRollActive=1;
                     }
                     else {
@@ -1657,7 +1657,7 @@ bool WalkingModule::updateTrajectories(const size_t& mergePoint)
     // get dcm position and velocity
     m_trajectoryGenerator->getDCMPositionTrajectory(DCMPositionDesired);
     m_trajectoryGenerator->getDCMVelocityTrajectory(DCMVelocityDesired);
-//    m_trajectoryGenerator->getZMPPositionTrajectory(ZMPPositionDesired);
+    m_trajectoryGenerator->getZMPPositionTrajectory(ZMPPositionDesired);
 
     // get feet trajectories
     m_trajectoryGenerator->getFeetTrajectories(leftTrajectory, rightTrajectory);
@@ -1687,7 +1687,7 @@ bool WalkingModule::updateTrajectories(const size_t& mergePoint)
 
     StdUtilities::appendVectorToDeque(comHeightTrajectory, m_comHeightTrajectory, mergePoint);
     StdUtilities::appendVectorToDeque(comHeightVelocity, m_comHeightVelocity, mergePoint);
-//    StdUtilities::appendVectorToDeque(ZMPPositionDesired, m_ZMPPositionDesired, mergePoint);
+    StdUtilities::appendVectorToDeque(ZMPPositionDesired, m_ZMPPositionDesired, mergePoint);
 
     if (m_useStepAdaptation)
     {
@@ -1854,13 +1854,13 @@ bool WalkingModule::setPlannerInput(double x, double y)
             return true;
 
         // Since the evaluation of a new trajectory takes time the new trajectory will be merged after x cycles
-        m_newTrajectoryMergeCounter = 20;
+        m_newTrajectoryMergeCounter = 10;
     }
 
     // the trajectory was not finished the new trajectory will be attached at the next merge point
     else
     {
-        if(m_mergePoints.front() > 20)
+        if(m_mergePoints.front() > 10)
             m_newTrajectoryMergeCounter = m_mergePoints.front();
         else if(m_mergePoints.size() > 1)
         {
@@ -1874,7 +1874,7 @@ bool WalkingModule::setPlannerInput(double x, double y)
             if(m_newTrajectoryRequired)
                 return true;
 
-            m_newTrajectoryMergeCounter = 20;
+            m_newTrajectoryMergeCounter = 10;
         }
     }
 
