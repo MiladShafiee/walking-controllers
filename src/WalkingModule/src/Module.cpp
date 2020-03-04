@@ -791,9 +791,12 @@ bool WalkingModule::updateModule()
         iDynTree::Vector3 imuRPY;
         iDynTree::Rotation StanceFootOrientation;
         StanceFootOrientation=iDynTree::Rotation::Identity();
-        double miladTempP=0;
-        double miladTempR=0;
-        double jointsError=0;
+        double TempPitch=0;
+        double TempRoll=0;
+        double leftArmPitchError=0;
+        double rightArmPitchError=0;
+        double leftArmRollError=0;
+        double rightArmRollError=0;
 
         if (m_useStepAdaptation)
         {
@@ -802,37 +805,63 @@ bool WalkingModule::updateModule()
 
             for (int var = 0; var < m_robotControlHelper->getActuatedDoFs(); var++)
             {
-                if(var==10 || var ==11 || var==12 || var==13)
+                if(var==3 || var==6)
                 {
-                    jointsError=jointsError+ abs(m_qDesired(var)-m_robotControlHelper->getJointPosition()(var));
+                    leftArmPitchError=leftArmPitchError+ abs(m_qDesired(var)-m_robotControlHelper->getJointPosition()(var));
+                }
+                if(var==4 || var==5)
+                {
+                    leftArmRollError=leftArmRollError+ abs(m_qDesired(var)-m_robotControlHelper->getJointPosition()(var));
+                }
+                if(var==7 || var==10)
+                {
+                    rightArmPitchError=rightArmPitchError+ abs(m_qDesired(var)-m_robotControlHelper->getJointPosition()(var));
+                }
+                if(var==8 || var==9)
+                {
+                    rightArmRollError=rightArmRollError+ abs(m_qDesired(var)-m_robotControlHelper->getJointPosition()(var));
                 }
             }
 
-            jointsError=jointsError+0.1;
+            leftArmPitchError=leftArmPitchError+0.1;
+            leftArmRollError=leftArmRollError+0.1;
+            rightArmRollError=rightArmRollError+0.1;
+            rightArmPitchError=rightArmPitchError+0.1;
 
             if (m_useStepAdaptation)
             {
-                    if (jointsError>m_stepAdapter->getRollPitchErrorThreshold()(1) ) {
-                        miladTempP=jointsError;
-                        m_isPitchActive=1;
+                if (leftArmPitchError>m_stepAdapter->getRollPitchErrorThreshold()(1) )
+                {
+                    TempPitch=leftArmPitchError;
+                    m_isPitchActive=1;
+                }
+                else if( rightArmPitchError>m_stepAdapter->getRollPitchErrorThreshold()(1))
+                {
+                    TempPitch=rightArmPitchError;
+                    m_isPitchActive=1;
+                }
+                else
+                {
+                    TempPitch=0;
+                }
 
-                        //miladTemp=0;
-                    }
-                    else {
-                        miladTempP=0;
-                    }
-
-                    if (jointsError>m_stepAdapter->getRollPitchErrorThreshold()(0)) {
-
-                        miladTempR=1*jointsError;/*(m_qDesired(4)-m_robotControlHelper->getJointPosition()(4));*///m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0);
-                        m_isRollActive=1;
-                    }
-                    else {
-                        miladTempR=0;
-                    }
+                if (leftArmRollError>m_stepAdapter->getRollPitchErrorThreshold()(0) && m_leftInContact.front())
+                {
+                    TempRoll=1*leftArmRollError;
+                    m_isRollActive=1;
+                }
+                else if( rightArmRollError>m_stepAdapter->getRollPitchErrorThreshold()(0) && m_rightInContact.front())
+                {
+                    TempRoll=-1*rightArmRollError;
+                    m_isRollActive=1;
+                }
+                else
+                {
+                    TempRoll=0;
+                }
             }
 
-            StanceFootOrientation=iDynTree::Rotation::RPY (miladTempR,miladTempP,0); 	//=m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY();
+            StanceFootOrientation=iDynTree::Rotation::RPY (TempRoll,TempPitch,0); 	//=m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY();
 
             iDynTree::Vector3 ZMP3d;
             ZMP3d(0)=measuredZMP(0);
@@ -1323,13 +1352,21 @@ bool WalkingModule::updateModule()
             iDynTree::Vector2 m_isRollPitchActiveVec;
             m_isRollPitchActiveVec(0)=m_isRollActive;
             m_isRollPitchActiveVec(1)=m_isPitchActive;
-            iDynTree::Vector6 rollPitchTorso;
-            rollPitchTorso(0)=m_robotControlHelper->getJointPosition()(3);
-            rollPitchTorso(1)=m_robotControlHelper->getJointPosition()(4);
+            iDynTree::Vector6 leftArmJointsError;
+            iDynTree::Vector6 rightArmJointsError;
+            leftArmJointsError(0)=m_robotControlHelper->getJointPosition()(3)-m_qDesired(3);
+            leftArmJointsError(1)=m_robotControlHelper->getJointPosition()(4)-m_qDesired(4);
+            leftArmJointsError(2)=m_robotControlHelper->getJointPosition()(5)-m_qDesired(5);
+            leftArmJointsError(3)=m_robotControlHelper->getJointPosition()(6)-m_qDesired(6);
+            leftArmJointsError(4)=leftArmRollError;
+            leftArmJointsError(5)=leftArmPitchError;
 
-            rollPitchTorso(2)=m_qDesired(3);
-            rollPitchTorso(3)=m_qDesired(4);
-            rollPitchTorso(4)=jointsError;
+            rightArmJointsError(0)=m_robotControlHelper->getJointPosition()(7)-m_qDesired(7);
+            rightArmJointsError(1)=m_robotControlHelper->getJointPosition()(8)-m_qDesired(8);
+            rightArmJointsError(2)=m_robotControlHelper->getJointPosition()(9)-m_qDesired(9);
+            rightArmJointsError(3)=m_robotControlHelper->getJointPosition()(10)-m_qDesired(10);
+            rightArmJointsError(4)=rightArmRollError;
+            rightArmJointsError(5)=rightArmPitchError;
 
             m_walkingLogger->sendData(m_FKSolver->getDCM(), m_DCMPositionDesired.front(),DCMError, m_DCMVelocityDesired.front(),m_DCMPositionAdjusted.front(),
                                       measuredZMP, desiredZMP, m_FKSolver->getCoMPosition(),
@@ -1342,7 +1379,7 @@ bool WalkingModule::updateModule()
                                       errorL, errorR,m_adaptatedFootLeftTransform.getPosition(),m_adaptatedFootRightTransform.getPosition(),m_FKSolver->getRootLinkToWorldTransform().getPosition(),m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY(),
                                       m_dcmEstimatedI,m_isPushActiveVec,m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY(),
                                       m_isRollPitchActiveVec,m_DCMPositionSmoothed,m_smoothedFootRightTransform.getPosition(),m_smoothedFootLeftTransform.getPosition(),m_smoothedFootLeftTwist.getLinearVec3(),m_leftTwistTrajectory.front().getLinearVec3(),m_adaptatedFootLeftTwist.getLinearVec3(),
-                                      rollPitchTorso);
+                                      leftArmJointsError,rightArmJointsError);
         }
 
         propagateTime();
@@ -1809,7 +1846,8 @@ bool WalkingModule::startWalking()
                                       "lf_smoothed_x","lf_smoothed_y","lf_smoothed_z","lf_smoothed_dx","lf_smoothed_dy","lf_smoothed_dz",
                                       "lf_des_dx", "lf_des_dy", "lf_des_dz",
                                       "lf_adapted_dx","lf_adapted_dy","lf_adapted_dz",
-                                      "torso_pitch_real", "torso_roll_real", "torso_pitch_des","torso_roll_des","joints_error","nothing"});
+                                      "l_shoulder_pitch_err", "l_shoulder_roll_err", "l_shoulder_yaw_err", "l_elbow_err","left_joints_roll_err","left_joints_pitch_error",
+                                      "r_shoulder_pitch_err", "r_shoulder_roll_err", "r_shoulder_yaw_err", "r_elbow_err","right_joints_roll_err","right_joints_pitch_error"});
     }
 
     // if the robot was only prepared the filters has to be reseted
