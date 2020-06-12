@@ -165,7 +165,7 @@ walking_controllers_dependent_option(WALKING_CONTROLLERS_COMPILE_LoggerClient "C
 walking_controllers_dependent_option(WALKING_CONTROLLERS_COMPILE_StepAdaptationController "Compile StepAdaptationController library?" ON
                                     "WALKING_CONTROLLERS_HAS_iDynTree;WALKING_CONTROLLERS_COMPILE_iDynTreeUtilities;WALKING_CONTROLLERS_COMPILE_YarpUtilities;WALKING_CONTROLLERS_COMPILE_TrajectoryPlanner;WALKING_CONTROLLERS_HAS_osqp;WALKING_CONTROLLERS_HAS_OsqpEigen" OFF)
 
-                                walking_controllers_dependent_option(WALKING_CONTROLLERS_COMPILE_EarlyContactStabilizer "Compile EarlyContactStabilizer library?" ON
+walking_controllers_dependent_option(WALKING_CONTROLLERS_COMPILE_EarlyContactStabilizer "Compile EarlyContactStabilizer library?" ON
                                     "WALKING_CONTROLLERS_HAS_iDynTree;WALKING_CONTROLLERS_COMPILE_iDynTreeUtilities;WALKING_CONTROLLERS_COMPILE_YarpUtilities;WALKING_CONTROLLERS_COMPILE_TrajectoryPlanner;WALKING_CONTROLLERS_HAS_osqp;WALKING_CONTROLLERS_HAS_OsqpEigen" OFF)
 
 walking_controllers_dependent_option(WALKING_CONTROLLERS_COMPILE_WalkingModule "Compile WalkingModule app?" ON

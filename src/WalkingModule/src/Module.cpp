@@ -242,6 +242,11 @@ bool WalkingModule::configure(yarp::os::ResourceFinder& rf)
 
     m_stepHeight = trajectoryPlannerOptions.check("stepHeight", yarp::os::Value(0.005)).asDouble();
 
+    yarp::os::Bottle& earlyContactStabilizertions = rf.findGroup("EARLY_CONTACT_STABILIZER");
+    earlyContactStabilizertions.append(generalOptions);
+    earlyContactStabilizertions.append(trajectoryPlannerOptions);
+    m_earlyContactStabilizer->configure(earlyContactStabilizertions);
+
     if(m_useStepAdaptation)
     {
         // initialize the step adaptation
@@ -874,6 +879,25 @@ bool WalkingModule::updateModule()
             yError() << "[WalkingModule::updateModule] Unable to get the ZMP controller output.";
             return false;
         }
+//        iDynTree::Position desiredZMP3D;
+//        desiredZMP3D(0)=desiredZMP(0);
+//        desiredZMP3D(1)=desiredZMP(1);
+//        desiredZMP3D(2)=0;
+
+//        double totalMass = 0.0;
+//        const iDynTree::Model & model = m_loader.model();
+
+//        for(size_t l=0; l < model.getNrOfLinks(); l++)
+//        {
+//            totalMass += model.getLink(static_cast<iDynTree::LinkIndex>(l))->getInertia().getMass();
+//        }
+
+//        iDynTree::Position temp;
+//        temp.zero();
+
+//        m_earlyContactStabilizer->mapDesiredZMPToDesiredContactWrench(desiredZMP3D,m_leftInContact.front(),m_rightInContact.front(),totalMass,temp,m_leftTrajectory.front().getPosition(),m_rightTrajectory.front().getPosition());
+//            m_earlyContactStabilizer->getLeftFootMappedForce();
+//            m_earlyContactStabilizer->getRightFootMappedForce();
 
         // inverse kinematics
         m_profiler->setInitTime("IK");
@@ -1037,6 +1061,30 @@ bool WalkingModule::updateModule()
             rightArmJointsError(4)=rightArmJointsError(1)+rightArmJointsError(2);
             rightArmJointsError(5)=rightArmJointsError(0)+rightArmJointsError(3);
 
+            iDynTree::Position desiredZMP3D;
+            desiredZMP3D(0)=desiredZMP(0);
+            desiredZMP3D(1)=desiredZMP(1);
+            desiredZMP3D(2)=0;
+
+            double totalMass = 0.0;
+            const iDynTree::Model & model = m_loader.model();
+
+            for(size_t l=0; l < model.getNrOfLinks(); l++)
+            {
+                totalMass += model.getLink(static_cast<iDynTree::LinkIndex>(l))->getInertia().getMass();
+            }
+
+            iDynTree::Position temp;
+            temp.zero();
+
+//            m_earlyContactStabilizer->mapDesiredZMPToDesiredContactWrench(desiredZMP3D,m_leftInContact.front(),m_rightInContact.front(),totalMass,temp,m_leftTrajectory.front().getPosition(),m_rightTrajectory.front().getPosition());
+//            m_earlyContactStabilizer->getLeftFootMappedForce();
+//            m_earlyContactStabilizer->getRightFootMappedForce();
+
+            iDynTree::Vector2 forceZ;
+            forceZ.zero();
+            //forceZ(0)=m_earlyContactStabilizer->getLeftFootMappedForce()(2);
+            //forceZ(1)=m_earlyContactStabilizer->getRightFootMappedForce()(2);
             m_walkingLogger->sendData(m_FKSolver->getDCM(), m_DCMPositionDesired.front(),DCMError, m_DCMVelocityDesired.front(),m_DCMPositionAdjusted.front(),
                                       measuredZMP, desiredZMP, m_FKSolver->getCoMPosition(),
                                       m_stableDCMModel->getCoMPosition(),
@@ -1048,7 +1096,7 @@ bool WalkingModule::updateModule()
                                       errorL, errorR,m_adaptedFootLeftTransform.getPosition(),m_adaptedFootRightTransform.getPosition(),m_FKSolver->getRootLinkToWorldTransform().getPosition(),m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY(),
                                       m_dcmEstimatedI,m_isPushActiveVec,m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY(),
                                       m_isRollPitchActiveVec,m_DCMPositionSmoothed,m_smoothedFootRightTransform.getPosition(),m_smoothedFootLeftTransform.getPosition(),m_smoothedFootLeftTwist.getLinearVec3(),m_leftTwistTrajectory.front().getLinearVec3(),m_adaptedFootLeftTwist.getLinearVec3(),
-                                      leftArmJointsError,rightArmJointsError);
+                                      leftArmJointsError,rightArmJointsError/*,forceZ*/);
         }
 
         propagateTime();
@@ -1526,7 +1574,7 @@ bool WalkingModule::startWalking()
                                       "lf_des_dx", "lf_des_dy", "lf_des_dz",
                                       "lf_adapted_dx","lf_adapted_dy","lf_adapted_dz",
                                       "l_shoulder_pitch_err", "l_shoulder_roll_err", "l_shoulder_yaw_err", "l_elbow_err","left_joints_roll_err","left_joints_pitch_error",
-                                      "r_shoulder_pitch_err", "r_shoulder_roll_err", "r_shoulder_yaw_err", "r_elbow_err","right_joints_roll_err","right_joints_pitch_error"});
+                                      "r_shoulder_pitch_err", "r_shoulder_roll_err", "r_shoulder_yaw_err", "r_elbow_err","right_joints_roll_err","right_joints_pitch_error"/*,"force_z_left","force_z_right"*/});
     }
 
     // if the robot was only prepared the filters has to be reseted

@@ -14,9 +14,14 @@
 #include <yarp/sig/Vector.h>
 
 //iDynTree
-#include <iDynTree/Core/VectorFixSize.h>
-#include <iDynTree/Core/Transform.h>
-#include <iDynTree/Core/LinearMotionVector3.h>
+#include <iDynTree/Core/Triplets.h>
+#include <iDynTree/Core/SparseMatrix.h>
+#include <iDynTree/ConvexHullHelpers.h>
+#include <iDynTree/Core/VectorDynSize.h>
+#include <iDynTree/Core/MatrixDynSize.h>
+#include <iDynTree/Core/Twist.h>
+#include <iDynTree/Core/SpatialAcc.h>
+#include <WalkingControllers/iDynTreeUtilities/Helper.h>
 
 
 namespace WalkingControllers
@@ -34,6 +39,10 @@ namespace WalkingControllers
         iDynTree::Vector3 m_footForceTorqueControlDerivativeGains;/**< The vector of gains for the derivative of the position and orientation terms of the controller. */
         iDynTree::Vector2 m_torsoOrientationControlDerivativeGains;/**< The vector of gains for the derivative terms in the torso controller. */
         iDynTree::Vector2 m_torsoOrientationControlGains;/**< The vector of gains for the torso controller. */
+        iDynTree::Vector3 m_leftFootMappedForce;/**< The vector that includes the left foot  mapped force. */
+        iDynTree::Vector3 m_leftFootMappedTorque;/**< The vector that includes the left foot mapped torque from desired zmp */
+        iDynTree::Vector3 m_rightFootMappedForce;/**< The vector that includes the right foot  mapped force. */
+        iDynTree::Vector3 m_rightFootMappedTorque;/**< The vector that includes the right foot mapped torque from desired zmp */
 
     public:
 
@@ -53,8 +62,7 @@ namespace WalkingControllers
          * @param contactWrenchOrigin the position of the point that contact wrench has been calculated.
          * @return true/false in case of success/failure
          */
-        bool mapDesiredZMPToDesiredContactWrench(const iDynTree::Vector2& desiredZMP,const bool& leftInContact, const bool& rightInContact,
-                                                 const double& mass,const iDynTree::Position& contactWrenchOrigin);
+        bool mapDesiredZMPToDesiredContactWrench(const iDynTree::Position &desiredZMP, const bool &leftInContact, const bool &rightInContact, const double &mass, const iDynTree::Position &contactWrenchOrigin, const iDynTree::Position &leftFootPosition,const iDynTree::Position &rightFootPosition);
 
         /**
          * control the foot contact force in z direction.
@@ -105,6 +113,9 @@ namespace WalkingControllers
          * @return modified roll and pitch angle of the foot.
          */
         const iDynTree::Vector2& getModifiedFootRollPitch()const;
+        const iDynTree::Vector3& getLeftFootMappedForce() const;
+        const iDynTree::Vector3& getRightFootMappedForce() const;
+        EarlyContactStabilizer();
     };
 };
 

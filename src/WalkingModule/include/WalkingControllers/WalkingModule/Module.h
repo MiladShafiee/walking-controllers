@@ -44,6 +44,7 @@
 
 #include <WalkingControllers/StepAdaptationController/StepAdaptationController.hpp>
 #include <WalkingControllers/StepAdaptationController/DCMSimpleEstimator.hpp>
+#include <WalkingControllers/EarlyContactStabilizer/EarlyContactStabilizer.hpp>
 
 #include <WalkingControllers/KinDynWrapper/Wrapper.h>
 #include <WalkingControllers/RetargetingHelper/Helper.h>
@@ -153,6 +154,7 @@ namespace WalkingControllers
         std::unique_ptr<LoggerClient> m_walkingLogger; /**< Pointer to the Walking Logger object. */
         std::unique_ptr<TimeProfiler> m_profiler; /**< Time profiler. */
         std::unique_ptr<StepAdaptationController> m_stepAdapter; /**< Pointer to the step adaptation object. */
+        std::unique_ptr<EarlyContactStabilizer> m_earlyContactStabilizer; /**< Pointer to the early contact stabilizer object. */
 
         double m_additionalRotationWeightDesired; /**< Desired additional rotational weight matrix. */
         double m_desiredJointsWeight; /**< Desired joint weight matrix. */

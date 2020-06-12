@@ -54,6 +54,7 @@ if(WALKING_CONTROLLERS_COMPILE_WalkingModule)
     WalkingControllers::RetargetingHelper
     WalkingControllers::LoggerClient
     WalkingControllers::StepAdaptationController
+    WalkingControllers::EarlyContactStabilizer
     )
 
   install(TARGETS ${EXE_TARGET_NAME} DESTINATION bin)
