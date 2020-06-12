@@ -115,7 +115,6 @@ namespace WalkingControllers
         const iDynTree::Vector2& getModifiedFootRollPitch()const;
         const iDynTree::Vector3& getLeftFootMappedForce() const;
         const iDynTree::Vector3& getRightFootMappedForce() const;
-        EarlyContactStabilizer();
     };
 };
 

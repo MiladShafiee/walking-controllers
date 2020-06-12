@@ -88,7 +88,7 @@ bool EarlyContactStabilizer::mapDesiredZMPToDesiredContactWrench(const iDynTree:
         alpha=abs(leftFootPosition(1)-desiredZMP(1))/abs(leftFootPosition(1)-rightFootPosition(1));
 
         m_rightFootMappedForce(2)=-1*(1-alpha)*mass*9.81;
-        m_rightFootMappedForce(2)=-1*(alpha)*mass*9.81;
+        m_leftFootMappedForce(2)=-1*(alpha)*mass*9.81;
     }
 
     return true;
