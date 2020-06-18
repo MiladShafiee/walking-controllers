@@ -59,36 +59,30 @@ bool EarlyContactStabilizer::configure(const yarp::os::Searchable& config)
 }
 
 bool EarlyContactStabilizer::mapDesiredZMPToDesiredContactWrench(const iDynTree::Position &desiredZMP, const bool &leftInContact, const bool &rightInContact, const double &mass, const iDynTree::Position &contactWrenchOrigin, const iDynTree::Position &leftFootPosition,const iDynTree::Position &rightFootPosition)
-{ iDynTree::Vector2 mmm;
-    mmm.zero();
-    m_isEarlyContactStabilzerActive=0;
-    yInfo()<<",dkkddkkdkkdkkd";
-    m_modifiedRollPitchFootAngle.zero();
-    yInfo()<<",dkkddkkdkkdkkd";
+{
     m_leftFootMappedForce.zero();
-        yInfo()<<",dkkddkkdkkdkkd";
     m_rightFootMappedForce.zero();
     m_rightFootMappedTorque.zero();
     m_leftFootMappedTorque.zero();
+
     if(!leftInContact)
     {
-
-        m_rightFootMappedForce(2)=-1*mass*9.81;
+        m_alpha=1;
+        m_rightFootMappedForce(2)=-1*(m_alpha)*mass*9.81;
 //        iDynTree::toEigen(m_rightFootMappedTorque)=iDynTree::skew(iDynTree::toEigen(contactWrenchOrigin)-iDynTree::toEigen(desiredZMP))*iDynTree::toEigen(m_rightFootMappedForce);
     }
     else if(!rightInContact)
     {
-        m_leftFootMappedForce(2)=-1*mass*9.81;
+        m_alpha=0;
+        m_leftFootMappedForce(2)=-1*(1-m_alpha)*mass*9.81;
 //        iDynTree::toEigen(m_leftFootMappedTorque)=iDynTree::skew(iDynTree::toEigen(contactWrenchOrigin)-iDynTree::toEigen(desiredZMP))*iDynTree::toEigen(m_leftFootMappedForce);
     }
     else
     {
-        double alpha;
-        alpha=0;
-        alpha=abs(leftFootPosition(1)-desiredZMP(1))/abs(leftFootPosition(1)-rightFootPosition(1));
+        m_alpha=abs(leftFootPosition(1)-desiredZMP(1))/abs(leftFootPosition(1)-rightFootPosition(1));
 
-        m_rightFootMappedForce(2)=-1*(1-alpha)*mass*9.81;
-        m_rightFootMappedForce(2)=-1*(alpha)*mass*9.81;
+        m_rightFootMappedForce(2)=-1*(m_alpha)*mass*9.81;
+        m_leftFootMappedForce(2)=-1*(1-m_alpha)*mass*9.81;
     }
 
     return true;
@@ -138,4 +132,41 @@ const iDynTree::Vector3& EarlyContactStabilizer::getRightFootMappedForce() const
 bool EarlyContactStabilizer::isEarlyContactStabilizerActive()
 {
     return m_isEarlyContactStabilzerActive;
+}
+
+bool EarlyContactStabilizer::getContactState(footContactState &rightFootContactState,footContactState& leftFootContactState,const iDynTree::Wrench& rightWrench,
+                                             const iDynTree::Wrench& leftWrench,const bool &leftInContact,const bool &rightInContact)
+{
+        if(rightInContact  && !(rightWrench.getLinearVec3()(2)>20))
+        {
+            rightFootContactState=footContactState::late;
+        }
+        else if(!rightInContact && (rightWrench.getLinearVec3()(2)>20))
+        {
+            rightFootContactState=footContactState::early;
+        }
+        else
+        {
+            rightFootContactState=footContactState::onTime;
+        }
+
+        if(leftInContact  && !(leftWrench.getLinearVec3()(2)>20))
+        {
+            leftFootContactState=footContactState::late;
+        }
+        else if(!rightInContact && (leftWrench.getLinearVec3()(2)>20))
+        {
+            leftFootContactState=footContactState::early;
+        }
+        else
+        {
+            leftFootContactState=footContactState::onTime;
+        }
+
+    return true;
+}
+
+const double& EarlyContactStabilizer::getAlpha() const
+{
+    return m_alpha;
 }

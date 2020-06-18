@@ -1737,7 +1737,8 @@ bool WalkingModule::dcmSmoother(const iDynTree::Vector2 adaptedDCM,const iDynTre
             m_pushRecoveryActiveIndex=0;
         }
     }
-    else {
+    else
+    {
         m_kDCMSmoother=1;
     }
 

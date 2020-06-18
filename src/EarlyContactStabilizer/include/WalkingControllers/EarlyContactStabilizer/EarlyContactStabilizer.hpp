@@ -19,6 +19,7 @@
 #include <iDynTree/ConvexHullHelpers.h>
 #include <iDynTree/Core/VectorDynSize.h>
 #include <iDynTree/Core/MatrixDynSize.h>
+#include <iDynTree/Core/Wrench.h>
 #include <iDynTree/Core/Twist.h>
 #include <iDynTree/Core/SpatialAcc.h>
 #include <WalkingControllers/iDynTreeUtilities/Helper.h>
@@ -27,12 +28,18 @@
 namespace WalkingControllers
 {
 
+/**
+ * Enumerator for understanding left foot real contact state.
+ */
+    enum class footContactState{early,late,onTime};
+
     class EarlyContactStabilizer
     {
         bool m_isEarlyContactStabilzerActive;
         double m_gravityAcceleration; /**< The gravity acceleration. */
         double m_mass; /**< Mass of the robot. */
         double m_modifiedFootVelocityZ; /**< Modified velocity of the foot in z direction. */
+        double m_alpha;
         iDynTree::Vector2 m_modifiedRollPitchFootAngle; /**< Modified angle of the roll and pitch of the foot. */
         iDynTree::Rotation m_modifiedTorsoOrientation;/**< Modified orientation  of the torso. */
         iDynTree::Vector3 m_footForceTorqueControlGains;/**< The vector of gains for position and orientation terms of the controller. */
@@ -43,6 +50,8 @@ namespace WalkingControllers
         iDynTree::Vector3 m_leftFootMappedTorque;/**< The vector that includes the left foot mapped torque from desired zmp */
         iDynTree::Vector3 m_rightFootMappedForce;/**< The vector that includes the right foot  mapped force. */
         iDynTree::Vector3 m_rightFootMappedTorque;/**< The vector that includes the right foot mapped torque from desired zmp */
+        iDynTree::Wrench m_rightFootWrench; /**< iDynTree vector that contains right foot actual wrench. */
+        iDynTree::Wrench m_leftFootFootWrench; /**< iDynTree vector that contains left foot actual wrench. */
 
     public:
 
@@ -97,6 +106,12 @@ namespace WalkingControllers
         bool isEarlyContactStabilizerActive();
 
         /**
+         * Get value of the weight for distributing the contact wrench in double support(mapping zmp to contact wrench).
+         * @return Value of the weight for distributing the contact wrench in double support.
+         */
+        const double& getAlpha()const;
+
+        /**
          * Get the modified foot velocity in z direction.
          * @return Value of the modified foot velocity in z direction.
          */
@@ -115,6 +130,7 @@ namespace WalkingControllers
         const iDynTree::Vector2& getModifiedFootRollPitch()const;
         const iDynTree::Vector3& getLeftFootMappedForce() const;
         const iDynTree::Vector3& getRightFootMappedForce() const;
+        bool getContactState(footContactState &rightFootContactState,footContactState& leftFootContactState,const iDynTree::Wrench &rightWrench, const iDynTree::Wrench &leftWrench, const bool &leftInContact, const bool &rightInContact);
     };
 };
 
