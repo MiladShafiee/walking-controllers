@@ -40,4 +40,11 @@ service WalkingCommands
      * @return true/false in case of success/failure;
      */
     bool stopWalking();
+
+    /**
+     * stepping in place.
+     * Number of the steps.
+     * @return true in case of success and false otherwise.
+     */
+    bool stepInPlace(1:double numberOfSteps);
 }

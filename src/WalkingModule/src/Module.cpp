@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file WalkingModule.cpp
  * @authors Giulio Romualdi <giulio.romualdi@iit.it>
  * @copyright 2018 iCub Facility - Istituto Italiano di Tecnologia
@@ -399,6 +399,7 @@ bool WalkingModule::configure(yarp::os::ResourceFinder& rf)
 
     // initialize some variables
     m_newTrajectoryRequired = false;
+    m_stepInPlace=false;
     m_newTrajectoryMergeCounter = -1;
     m_robotState = WalkingFSM::Configured;
 
@@ -790,12 +791,6 @@ bool WalkingModule::updateModule()
 
         m_earlyContactStabilizer->getContactState(rightFootContactState,leftFootContactState, m_robotControlHelper->getRightWrench(),
                                                   m_robotControlHelper->getLeftWrench(),m_leftInContact.front(),m_rightInContact.front());
-
-        if(leftFootContactState==footContactState::early)
-        {
-            yError()<<"obstacle has been detected and walking stopped";
-
-        }
 
         runStepAdaptation(measuredZMP);
 
@@ -1355,12 +1350,60 @@ bool WalkingModule::askNewTrajectories(const double& initTime, const bool& isLef
 
     if (!m_useStepAdaptation)
     {
-        if(!m_trajectoryGenerator->updateTrajectories(initTime, m_DCMPositionDesired[mergePoint],
-                                                      m_DCMVelocityDesired[mergePoint], isLeftSwinging,
-                                                      measuredTransform, desiredPosition))
+        if(m_stepInPlace==true)
         {
-            yError() << "[WalkingModule::askNewTrajectories] Unable to update the trajectory.";
-            return false;
+            std::shared_ptr<FootPrint> leftTemp = std::make_unique<FootPrint>();
+            leftTemp->setFootName("left");
+            leftTemp->addStep(m_jleftFootprints->getSteps()[0]);
+            for(int i = 1; i < m_numberOfStepsInPlace; i++)
+            {
+                iDynTree::Vector2 position;
+                iDynTree::toEigen(position) =iDynTree::toEigen(m_jleftFootprints->getSteps()[0].position);
+                if(!leftTemp->addStep(position, 0, initTime+1+(i-1)*2))
+                {
+                    yError() << "[WalkingModule::askNewTrajectories] unable to add left step";
+                    return false;
+                }
+            }
+
+            std::shared_ptr<FootPrint> rightTemp = std::make_unique<FootPrint>();
+            rightTemp->setFootName("right");
+            rightTemp->addStep(m_jRightFootprints->getSteps()[0]);
+            for(int i = 1; i < m_numberOfStepsInPlace; i++)
+            {
+                iDynTree::Vector2 position;
+                iDynTree::toEigen(position) =iDynTree::toEigen(m_jRightFootprints->getSteps()[0].position);
+
+                if(!rightTemp->addStep(position,0,initTime+(i)*2))
+                {
+                    yError() << "[WalkingModule::askNewTrajectories] unable to add right foot step";
+                    return false;
+                }
+            }
+
+            DCMInitialState tempDCMInitialState;
+            if(!m_trajectoryGenerator->getDCMBoundaryConditionAtMergePoint(tempDCMInitialState))
+            {
+                yError() << "[WalkingModule::askNewTrajectories] unable to get get DCM boundary condition at merge point";
+                return false;
+            }
+
+            // generate the DCM trajectory
+            if(!m_trajectoryGenerator->generateTrajectoriesFromFootprints(leftTemp, rightTemp, initTime,tempDCMInitialState))
+            {
+                yError() << "[WalkingModule::askNewTrajectories] unable to generatempDCMInitialStatete new trajectorie after step adjustment.";
+                return false;
+            }
+        }
+        else
+        {
+            if(!m_trajectoryGenerator->updateTrajectories(initTime, m_DCMPositionDesired[mergePoint],
+                                                          m_DCMVelocityDesired[mergePoint], isLeftSwinging,
+                                                          measuredTransform, desiredPosition))
+            {
+                yError() << "[WalkingModule::askNewTrajectories] Unable to update the trajectory.";
+                return false;
+            }
         }
     }
     else
@@ -1444,10 +1487,10 @@ bool WalkingModule::updateTrajectories(const size_t& mergePoint)
 
     m_mergePoints.assign(mergePoints.begin(), mergePoints.end());
 
-    if (m_useStepAdaptation)
-    {
-        m_DCMSubTrajectories.clear();
-        m_trajectoryGenerator->getDCMSubTrajectories(m_DCMSubTrajectories);
+//    if (m_useStepAdaptation)
+//    {
+//        m_DCMSubTrajectories.clear();
+//        m_trajectoryGenerator->getDCMSubTrajectories(m_DCMSubTrajectories);
 
         std::shared_ptr<FootPrint> tempLeft;
         m_trajectoryGenerator->getLeftFootprint(tempLeft);
@@ -1460,7 +1503,7 @@ bool WalkingModule::updateTrajectories(const size_t& mergePoint)
                 yError() << "[updateTrajectories] unable to add left foot step";
                 return false;
             }
-         }
+        }
         m_jLeftstepList=m_jleftFootprints->getSteps();
 
         std::shared_ptr<FootPrint> tempRight;
@@ -1476,7 +1519,7 @@ bool WalkingModule::updateTrajectories(const size_t& mergePoint)
             }
          }
         m_jRightstepList=m_jRightFootprints->getSteps();
-    }
+//    }
 
     // the first merge point is always equal to 0
     m_mergePoints.pop_front();
@@ -1654,6 +1697,57 @@ bool WalkingModule::setGoal(double x, double y)
     return setPlannerInput(x, y);
 }
 
+bool WalkingModule::stepInPlace(double numberOfSteps)
+{
+    std::lock_guard<std::mutex> guard(m_mutex);
+
+    if(m_robotState != WalkingFSM::Walking)
+        return false;
+
+    // the trajectory was already finished the new trajectory will be attached as soon as possible
+    if(m_mergePoints.empty())
+    {
+        if(!(m_leftInContact.front() && m_rightInContact.front()))
+        {
+            yError() << "[WalkingModule::stepInPlace] The trajectory has already finished but the system is not in double support.";
+            return false;
+        }
+
+        if(m_newTrajectoryRequired)
+            return true;
+
+        // Since the evaluation of a new trajectory takes time the new trajectory will be merged after x cycles
+        m_newTrajectoryMergeCounter = 10;
+    }
+
+    // the trajectory was not finished the new trajectory will be attached at the next merge point
+    else
+    {
+        if(m_mergePoints.front() > 10)
+            m_newTrajectoryMergeCounter = m_mergePoints.front();
+        else if(m_mergePoints.size() > 1)
+        {
+            if(m_newTrajectoryRequired)
+                return true;
+
+            m_newTrajectoryMergeCounter = m_mergePoints[1];
+        }
+        else
+        {
+            if(m_newTrajectoryRequired)
+                return true;
+
+            m_newTrajectoryMergeCounter = 10;
+        }
+    }
+
+    m_newTrajectoryRequired = true;
+    m_stepInPlace=true;
+    m_numberOfStepsInPlace=(int)(numberOfSteps);
+
+    return true;
+}
+
 bool WalkingModule::pauseWalking()
 {
     std::lock_guard<std::mutex> guard(m_mutex);
@@ -1737,7 +1831,8 @@ bool WalkingModule::dcmSmoother(const iDynTree::Vector2 adaptedDCM,const iDynTre
             m_pushRecoveryActiveIndex=0;
         }
     }
-    else {
+    else
+    {
         m_kDCMSmoother=1;
     }
 

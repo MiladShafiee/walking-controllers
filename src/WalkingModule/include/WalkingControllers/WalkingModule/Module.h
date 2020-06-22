@@ -198,6 +198,8 @@ namespace WalkingControllers
 
         bool m_newTrajectoryRequired; /**< if true a new trajectory will be merged soon. (after m_newTrajectoryMergeCounter - 2 cycles). */
         size_t m_newTrajectoryMergeCounter; /**< The new trajectory will be merged after m_newTrajectoryMergeCounter - 2 cycles. */
+        bool m_stepInPlace;/**< if stepping in place has been requested. */
+        int m_numberOfStepsInPlace;/**< number of steps in place that has been requested. */
 
         std::mutex m_mutex; /**< Mutex. */
 
@@ -367,6 +369,13 @@ namespace WalkingControllers
          * @return true in case of success and false otherwise.
          */
         virtual bool stopWalking() override;
+
+        /**
+         * stepping in place.
+         * Number of the steps.
+         * @return true in case of success and false otherwise.
+         */
+        virtual bool stepInPlace(double numberOfSteps) override;
 
         bool runStepAdaptation(iDynTree::Vector2 measuredZMP);
     };
