@@ -47,4 +47,10 @@ service WalkingCommands
      * @return true in case of success and false otherwise.
      */
     bool stepInPlace(1:double numberOfSteps);
+
+    /**
+     * push recovery in stance mode.
+     * @return true in case of success and false otherwise.
+     */
+    bool pushRecoveryInStanceMode();
 }

@@ -77,6 +77,7 @@ struct StepAdapterOutput
     std::deque<iDynTree::Vector2> dcmVelocityAdjusted;
     iDynTree::Vector2 zmpNominal;
     iDynTree::Vector2 zmpAdjusted;
+    bool isPushRecoveryInStanceModeActive;
     double isPushActive;
     double isRollActive;
     double isPitchActive;
@@ -372,6 +373,14 @@ namespace WalkingControllers
          * @return true/false in case of success/failure.
          */
         bool runStepAdaptation(const StepAdapterInput &input, StepAdapterOutput& output);
+
+        /**
+         * Run the push recovery in stance mode.
+         * @param input Structure that includes data that we need as input for function.
+         * @param output Structure that includes data that is output of step adjustment.
+         * @return true/false in case of success/failure.
+         */
+        bool runPushRecoveryInStanceMode(const StepAdapterInput &input, StepAdapterOutput& output);
 
     };
 };
