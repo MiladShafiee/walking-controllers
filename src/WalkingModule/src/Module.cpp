@@ -794,7 +794,7 @@ bool WalkingModule::updateModule()
         if(leftFootContactState==footContactState::early)
         {
             yError()<<"obstacle has been detected and walking stopped";
-
+            return false;
         }
 
         runStepAdaptation(measuredZMP);
