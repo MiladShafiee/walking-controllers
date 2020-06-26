@@ -724,7 +724,7 @@ bool WalkingModule::updateModule()
         }
 
         // get feedbacks and evaluate useful quantities
-        if(!m_robotControlHelper->getFeedbacks(100))
+        if(!m_robotControlHelper->getFeedbacks(20))
         {
             yError() << "[WalkingModule::updateModule] Unable to get the feedback.";
             return false;
@@ -915,6 +915,8 @@ bool WalkingModule::updateModule()
                 iDynTree::Vector2 nextZmpPosition, currentZmpPosition;
                 bool checkFeasibility = false;
                 secondSS->getZMPPosition(0, nextZmpPosition, checkFeasibility);
+//                                secondSS->getZMPPosition(0, nextZmpPosition, checkFeasibility);
+//                                                secondSS->getZMPPosition(0, nextZmpPosition, checkFeasibility);
                 double angle = !m_leftInContact.front()? m_jleftFootprints->getSteps()[1].angle : m_jRightFootprints->getSteps()[1].angle;
                 m_stepAdapter->setNominalNextStepPosition(nextZmpPosition, angle);
 
@@ -1460,7 +1462,7 @@ bool WalkingModule::prepareRobot(bool onTheFly)
     // get the current state of the robot
     // this is necessary because the trajectories for the joints, CoM height and neck orientation
     // depend on the current state of the robot
-    if(!m_robotControlHelper->getFeedbacksRaw(100))
+    if(!m_robotControlHelper->getFeedbacksRaw(20))
     {
         yError() << "[WalkingModule::prepareRobot] Unable to get the feedback.";
         return false;
