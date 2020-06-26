@@ -613,6 +613,7 @@ bool TrajectoryGenerator::getDCMSubTrajectory(std::vector<std::shared_ptr<Genera
 
 
     dcmSubTrajectories= m_dcmGenerator->getDCMSubTrajectories();
+    return true;
 }
 
 
