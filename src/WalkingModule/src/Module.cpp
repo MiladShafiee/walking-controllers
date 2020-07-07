@@ -816,6 +816,37 @@ bool WalkingModule::updateModule()
         m_earlyContactStabilizer->getContactState(rightFootContactState,leftFootContactState, m_robotControlHelper->getRightWrench(),
                                                   m_robotControlHelper->getLeftWrench(),m_leftInContact.front(),m_rightInContact.front());
 
+        iDynTree::Rotation imuRotation=m_robotControlHelper->getIMUOreintation();
+        iDynTree::Vector3 imuRPY= imuRotation.asRPY();
+
+
+        iDynTree::Rotation pelvisOrientation;
+                pelvisOrientation=iDynTree::Rotation::Identity();
+                double miladTempP;
+                 double miladTempR;
+                if ((abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1)))>0.000 ) {
+                    miladTempP=m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1);
+
+                    //miladTemp=0;
+                }
+                else {
+                    miladTempP=0;
+                }
+
+                if ( (abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0)))>0.000) {
+
+                    miladTempR=m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0);
+                    //miladTemp=0;
+                }
+                else {
+                    miladTempR=0;
+                }
+
+
+               pelvisOrientation=iDynTree::Rotation::RPY (miladTempR,miladTempP,0);
+
+yInfo()<<miladTempR<<miladTempP<<"sjshhshhshs";
+
         runStepAdaptation(measuredZMP);
         if (!m_pushDetectedInStanceMode)
         {

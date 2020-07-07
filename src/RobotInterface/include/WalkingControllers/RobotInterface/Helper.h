@@ -75,6 +75,13 @@ namespace WalkingControllers
         std::unique_ptr<iCub::ctrl::FirstOrderLowPassFilter> m_velocityFilter; /**< Joint velocity low pass filter .*/
         bool m_useVelocityFilter; /**< True if the joint velocity filter is used. */
 
+ yarp::os::BufferedPort<yarp::sig::Vector> m_pelvisIMUPort; /**< IMU base port. */
+ iDynTree::Rotation m_imuOrientation; /**< imu orientation data */
+ iDynTree::LinAcceleration m_imuAcceleration;/**< imu acceleration data */
+ iDynTree::AngVelocity m_imuAngularVelocity;/**< imu angular velocity data */
+  bool m_usePelvisIMU; /**< True if an the base is provided by the extern. */
+
+
         yarp::os::BufferedPort<yarp::sig::Vector> m_leftWrenchPort; /**< Left foot wrench port. */
         yarp::os::BufferedPort<yarp::sig::Vector> m_rightWrenchPort; /**< Right foot wrench port. */
         yarp::sig::Vector m_leftWrenchInput; /**< YARP vector that contains left foot wrench. */
@@ -249,6 +256,10 @@ namespace WalkingControllers
          * Return true if the base of the robot is provided by an external source
          */
         bool isExternalRobotBaseUsed();
+
+ const iDynTree::LinAcceleration &getIMUAcceleration() const;
+ const iDynTree::Rotation &getIMUOreintation() const;
+ const iDynTree::AngVelocity &getIMUAngularVelocity() const;
 
     };
 };

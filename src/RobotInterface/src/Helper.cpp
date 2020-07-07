@@ -55,12 +55,13 @@ bool RobotInterface::getFeedbacksRaw(unsigned int maxAttempts)
 
     bool okPosition = false;
     bool okVelocity = false;
-
+ bool okPelvisIMU = true;
     bool okLeftWrench = false;
     bool okRightWrench = false;
 
     bool okBaseEstimation = !m_useExternalRobotBase;
-
+    if(m_usePelvisIMU)
+        okPelvisIMU = !m_usePelvisIMU;
     unsigned int attempt = 0;
     do
     {
@@ -112,7 +113,28 @@ bool RobotInterface::getFeedbacksRaw(unsigned int maxAttempts)
             }
         }
 
-        if(okPosition && okVelocity && okLeftWrench && okRightWrench && okBaseEstimation)
+
+
+        if (m_usePelvisIMU) {
+            if(!okPelvisIMU){
+                yarp::sig::Vector *pelvisIMU = NULL;
+                pelvisIMU=m_pelvisIMUPort.read(false);
+                if (pelvisIMU!=NULL) {
+
+                    m_imuOrientation=m_imuOrientation.RPY(iDynTree::deg2rad((*pelvisIMU)(0)),iDynTree::deg2rad((*pelvisIMU)(1)),iDynTree::deg2rad((*pelvisIMU)(2)));
+                    m_imuAcceleration(0)=(*pelvisIMU)(3) ;
+                    m_imuAcceleration(1)=(*pelvisIMU)(4) ;
+                    m_imuAcceleration(2)=(*pelvisIMU)(5) ;
+
+                    m_imuAngularVelocity(0)=(*pelvisIMU)(6) ;
+                    m_imuAngularVelocity(0)=(*pelvisIMU)(7) ;
+                    m_imuAngularVelocity(0)=(*pelvisIMU)(8) ;
+                    okPelvisIMU=true;
+                }
+            }
+        }
+
+        if(okPosition && okVelocity && okLeftWrench && okRightWrench && okBaseEstimation && okPelvisIMU)
         {
             for(unsigned j = 0 ; j < m_actuatedDOFs; j++)
             {
@@ -151,6 +173,9 @@ bool RobotInterface::getFeedbacksRaw(unsigned int maxAttempts)
 
     if(!okBaseEstimation)
         yError() << "\t - Base estimation";
+
+    if(!okPelvisIMU)
+          yError() << "\t - Pelvis imu data";
 
     return false;
 }
@@ -371,6 +396,25 @@ bool RobotInterface::configureRobot(const yarp::os::Searchable& config)
         m_jointPositionsUpperBounds(i) = iDynTree::deg2rad(maxAngle);
         m_jointPositionsLowerBounds(i) = iDynTree::deg2rad(minAngle);
 
+    }
+
+    m_usePelvisIMU=config.check("m_use_pelvis_imu", yarp::os::Value("False")).asBool();
+    if (m_usePelvisIMU) {
+        m_pelvisIMUPort.open("/" + name + "/pelvisIMU:i");
+        // connect port
+
+        std::string pelvisIMUPortName;
+        if(!YarpUtilities::getStringFromSearchable(config, "imu_pelvis_port_name", pelvisIMUPortName))
+        {
+            yError() << "[RobotHelper::pelvisIMUPort] Unable to get the string from searchable.";
+            return false;
+        }
+
+        if(!yarp::os::Network::connect(pelvisIMUPortName,"/" + name + "/pelvisIMU:i"))
+        {
+            yError() << "Unable to connect to port " << "/" + name + "/pelvisIMU::i";
+            return false;
+        }
     }
 
     m_useExternalRobotBase = config.check("use_external_robot_base", yarp::os::Value("False")).asBool();
@@ -875,4 +919,19 @@ bool RobotInterface::setInteractionMode()
         m_currentModeofJoints = m_isJointModeStiffVector;
 
     return true;
+}
+
+const iDynTree::LinAcceleration& RobotInterface::getIMUAcceleration() const
+{
+    return m_imuAcceleration;
+}
+
+const iDynTree::AngVelocity& RobotInterface::getIMUAngularVelocity() const
+{
+    return m_imuAngularVelocity;
+}
+
+const iDynTree::Rotation& RobotInterface::getIMUOreintation() const
+{
+    return m_imuOrientation;
 }
