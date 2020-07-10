@@ -958,7 +958,7 @@ bool StepAdaptationController::runPushRecoveryInStanceMode(const StepAdapterInpu
         output.isPushActive=0;
 
         if((abs(input.dcmPositionSmoothed(0) - getEstimatedDCM()(0))) > getDCMErrorThreshold()(0) ||(abs(input.dcmPositionSmoothed(1) - getEstimatedDCM()(1)))> getDCMErrorThreshold()(1) )
-        {
+        {        yError() << "[WalkingModule::updateModule]"<<84774747;
                 output.isPushRecoveryInStanceModeActive=true;
                 iDynTree::Vector2 tempDCMError;
                 tempDCMError(1)=0.00;
@@ -967,16 +967,16 @@ bool StepAdaptationController::runPushRecoveryInStanceMode(const StepAdapterInpu
                 yInfo()<<"triggering the push recovery";
                 if((abs(input.dcmPositionSmoothed(0) - getEstimatedDCM()(0))) > getDCMErrorThreshold()(0))
                 {
-                    tempDCMError(0)=getEstimatedDCM()(0);
+                    tempDCMError(0)=0;
                 }
                 if((abs(input.dcmPositionSmoothed(1) - getEstimatedDCM()(1))) > getDCMErrorThreshold()(1))
                 {
-                    tempDCMError(1)=getEstimatedDCM()(1);
+                    tempDCMError(1)=0;
                 }
                 setCurrentDcmPosition(tempDCMError);
         }
         else
-        {
+        {yError() << "[WalkingModule::ajabbababbabbabba]"<<84774747;
                 setCurrentDcmPosition(output.dcmPositionAdjusted.front());
         }
 

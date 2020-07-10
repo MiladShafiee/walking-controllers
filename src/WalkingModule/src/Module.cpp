@@ -843,9 +843,9 @@ bool WalkingModule::updateModule()
                 }
 
 
-               pelvisOrientation=iDynTree::Rotation::RPY (miladTempR,miladTempP,0);
+               //pelvisOrientation=iDynTree::Rotation::RPY (miladTempR,miladTempP,0);
 
-yInfo()<<miladTempR<<miladTempP<<"sjshhshhshs";
+
 
         runStepAdaptation(measuredZMP);
         if (!m_pushDetectedInStanceMode)
@@ -1075,7 +1075,7 @@ yInfo()<<miladTempR<<miladTempP<<"sjshhshhshs";
             RfootAdaptedX(1)=m_adaptedFootRightTransform.getPosition()(1);
             //iDynTree::Lfoot_adaptedX=
             iDynTree::Vector6 m_isPushActiveVec;
-            m_isPushActiveVec(0)=m_isPushActive;
+            m_isPushActiveVec(0)=m_pushDetectedInStanceMode;
             m_isPushActiveVec(1)=m_indexSmoother;
             m_isPushActiveVec(2)= m_kDCMSmoother;
 
@@ -1457,7 +1457,7 @@ bool WalkingModule::askNewTrajectories(const double& initTime, const bool& isLef
         else if (m_pushRecoveryInStanceMode==true)
         {
             if(m_pushDetectedInStanceMode)
-            {
+            { yError()<<11111111111<<"yes push detected in stance mode";
                 std::shared_ptr<FootPrint> leftTemp = std::make_unique<FootPrint>();
                 leftTemp->setFootName("left");
                 leftTemp->addStep(m_jleftFootprints->getSteps()[0]);
@@ -1507,6 +1507,9 @@ bool WalkingModule::askNewTrajectories(const double& initTime, const bool& isLef
                     return false;
                 }
 
+            }
+            else {
+                yError()<<7474747<<"Nooooooo push not detected in stance mode";
             }
 
         }
@@ -2224,6 +2227,8 @@ bool WalkingModule::runPushRecovery(iDynTree::Vector2 measuredZMP)
                                                         m_leftInContact,m_rightInContact,m_robotControlHelper->getAxesList());
         m_isRollActive=m_stepAdapter->isArmRollActive();
         m_isPitchActive=m_stepAdapter->isArmPitchActive();
+        yError() << "[WalkingModule::updateModule]"<<84774747;
+        yError() << "[WalkingModule::updateModule]"<<m_isPitchActive<<m_isRollActive;
         if(!m_stepAdapter->UpdateDCMEstimator(m_stableDCMModel->getCoMPosition(),m_stableDCMModel->getCoMVelocity(),measuredZMP,m_comHeightTrajectory.front()))
         {
             yError() << "[WalkingModule::updateModule] Unable to to recieve DCM from pendulumEstimator";
@@ -2273,7 +2278,7 @@ bool WalkingModule::runPushRecovery(iDynTree::Vector2 measuredZMP)
         m_outputStepAdaptation.adaptedFootRightAcceleration=m_adaptedFootRightAcceleration;
         m_outputStepAdaptation.currentFootRightAcceleration=m_currentFootRightAcceleration;
         m_outputStepAdaptation.FootTimeIndexAfterPushDetection=m_FootTimeIndexAfterPushDetection;
-
+        m_outputStepAdaptation.isPushRecoveryInStanceModeActive=false;
         m_inputStepAdaptation.dT=m_dT;
         m_inputStepAdaptation.omega=omega;
         m_inputStepAdaptation.time=m_time;
@@ -2325,7 +2330,7 @@ bool WalkingModule::runPushRecovery(iDynTree::Vector2 measuredZMP)
         m_pushDetectedInStanceMode=m_outputStepAdaptation.isPushRecoveryInStanceModeActive;
         if(m_pushDetectedInStanceMode==true)
         {
-            m_newTrajectoryMergeCounter=11;
+            m_newTrajectoryMergeCounter=5;
         }
 //        yError()<<"mohemmmmsdhdh"<<m_outputStepAdaptation.impactTimeAdjusted<<"mohemmmmsdhdh"<<m_outputStepAdaptation.adaptedFootLeftTransform.getPosition()(0)<<m_outputStepAdaptation.adaptedFootLeftTransform.getPosition()(1);
     }
