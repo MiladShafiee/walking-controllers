@@ -693,12 +693,13 @@ const int& StepAdaptationController::getPushRecoveryActivationIndex() const
     return m_pushRecoveryActivationIndex;
 }
 
-bool StepAdaptationController::UpdateDCMEstimator(const iDynTree::Vector2& CoM2DPosition,const iDynTree::Vector2& CoMVelocity,const iDynTree::Vector2& measuredZMP,const double& CoMHeight)
+bool StepAdaptationController::UpdateDCMEstimator(const iDynTree::Vector2& CoM2DPosition,const iDynTree::Vector2& CoMVelocity,const iDynTree::Vector2& measuredZMP,const double& CoMHeight, iDynTree::Rotation pelvisRotation)
 {
     iDynTree::Rotation imuRotation;
     iDynTree::Vector3 imuRPY;
     iDynTree::Rotation StanceFootOrientation;
     StanceFootOrientation=iDynTree::Rotation::Identity();
+    m_pelvisRotation=pelvisRotation;
 
     if (m_isRollActive)
     {
@@ -728,7 +729,7 @@ bool StepAdaptationController::UpdateDCMEstimator(const iDynTree::Vector2& CoM2D
     CoMVelocity3d(1)=CoMVelocity(1);
     CoMVelocity3d(2)=0;
 
-    if(!m_DCMEstimator->update(StanceFootOrientation,ZMP3d,CoM3d,CoMVelocity3d))
+    if(!m_DCMEstimator->update(m_pelvisRotation,ZMP3d,CoM3d,CoMVelocity3d))
     {
         yError() << "[StepAdaptationController::UpdateDCMEstimator] Unable to to recieve DCM from pendulumEstimator";
         return false;
@@ -958,7 +959,7 @@ bool StepAdaptationController::runPushRecoveryInStanceMode(const StepAdapterInpu
         output.isPushActive=0;
 
         if((abs(input.dcmPositionSmoothed(0) - getEstimatedDCM()(0))) > getDCMErrorThreshold()(0) ||(abs(input.dcmPositionSmoothed(1) - getEstimatedDCM()(1)))> getDCMErrorThreshold()(1) )
-        {        yError() << "[WalkingModule::updateModule]"<<84774747;
+        {
                 output.isPushRecoveryInStanceModeActive=true;
                 iDynTree::Vector2 tempDCMError;
                 tempDCMError(1)=0.00;
@@ -967,16 +968,16 @@ bool StepAdaptationController::runPushRecoveryInStanceMode(const StepAdapterInpu
                 yInfo()<<"triggering the push recovery";
                 if((abs(input.dcmPositionSmoothed(0) - getEstimatedDCM()(0))) > getDCMErrorThreshold()(0))
                 {
-                    tempDCMError(0)=0;
+                    tempDCMError(0)=getEstimatedDCM()(0);
                 }
                 if((abs(input.dcmPositionSmoothed(1) - getEstimatedDCM()(1))) > getDCMErrorThreshold()(1))
                 {
-                    tempDCMError(1)=0;
+                    tempDCMError(1)=getEstimatedDCM()(1);
                 }
                 setCurrentDcmPosition(tempDCMError);
         }
         else
-        {yError() << "[WalkingModule::ajabbababbabbabba]"<<84774747;
+        {
                 setCurrentDcmPosition(output.dcmPositionAdjusted.front());
         }
 
@@ -996,7 +997,7 @@ bool StepAdaptationController::runPushRecoveryInStanceMode(const StepAdapterInpu
             return false;
         }
 
-        output.impactTimeNominal = 1;/*firstSS->getTrajectoryDomain().second + input.timeOffset;*/
+        output.impactTimeNominal = 0.2;/*firstSS->getTrajectoryDomain().second + input.timeOffset;*/
 
         output.impactTimeAdjusted = getDesiredImpactTime() + input.timeOffset;
 

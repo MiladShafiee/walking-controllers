@@ -110,7 +110,9 @@ namespace WalkingControllers
 
         StepAdapterOutput m_outputStepAdaptation;/**< The structure of outputs of step adaptation */
         StepAdapterInput m_inputStepAdaptation;/**< The structure of inputs of step adaptation */
-
+        bool tempIMU;
+        double rollOffset;
+        double pitchOffset;
         double m_isPushActive;/**< Is push recovery active? */
         double m_isRollActive;/**< Is the threshold of roll angles of arm active? */
         double m_isPitchActive;/**< Is the threshold of pitch angles of arm active? */
@@ -386,7 +388,7 @@ namespace WalkingControllers
         virtual bool pushRecoveryInStanceMode() override;
 
         bool runStepAdaptation(iDynTree::Vector2 measuredZMP);
-        bool runPushRecovery(iDynTree::Vector2 measuredZMP);
+        bool runPushRecovery(iDynTree::Vector2 measuredZMP, iDynTree::Rotation pelvisRotation);
     };
 };
 #endif

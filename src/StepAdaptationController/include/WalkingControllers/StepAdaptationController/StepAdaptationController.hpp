@@ -57,6 +57,7 @@ struct StepAdapterInput
     iDynTree::Vector2 dcmPositionSmoothed;
     StepList rightStepList;
     StepList leftStepList;
+    iDynTree::Rotation pelvisRotation;
 };
 
 struct StepAdapterOutput
@@ -146,7 +147,7 @@ namespace WalkingControllers
 
         iDynTree::Vector2 m_zmpToCenterOfFootPositionLeft;
         iDynTree::Vector2 m_zmpToCenterOfFootPositionRight;
-
+        iDynTree::Rotation m_pelvisRotation;
         double m_remainingSingleSupportDuration;/**< The remained single support duration.*/
         double m_stepTiming; /**< The remanined single support duration+(next double support duration)/2  that is used for optimization.*/
         double m_stepDurationTolerance;/**< The tolerance of step timing with respect to the nominal value.*/
@@ -363,7 +364,7 @@ namespace WalkingControllers
          * @param CoMHeight the CoM height.
          * @return true/false in case of success/failure
          */
-        bool UpdateDCMEstimator(const iDynTree::Vector2 &CoM2DPosition, const iDynTree::Vector2 &CoMVelocity, const iDynTree::Vector2 &measuredZMP, const double &CoMHeight);
+        bool UpdateDCMEstimator(const iDynTree::Vector2 &CoM2DPosition, const iDynTree::Vector2 &CoMVelocity, const iDynTree::Vector2 &measuredZMP, const double &CoMHeight, iDynTree::Rotation pelvisRotation);
 
 
         /**

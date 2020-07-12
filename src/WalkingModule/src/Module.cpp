@@ -185,8 +185,10 @@ bool WalkingModule::configure(yarp::os::ResourceFinder& rf)
     setName(name.c_str());
 
     m_robotControlHelper = std::make_unique<RobotInterface>();
+    yarp::os::Bottle& stepAdaptatorOptionsForIMU = rf.findGroup("STEP_ADAPTATOR");
     yarp::os::Bottle& robotControlHelperOptions = rf.findGroup("ROBOT_CONTROL");
     robotControlHelperOptions.append(generalOptions);
+    robotControlHelperOptions.append(stepAdaptatorOptionsForIMU);
     if(!m_robotControlHelper->configureRobot(robotControlHelperOptions))
     {
         yError() << "[WalkingModule::configure] Unable to configure the robot.";
@@ -411,7 +413,9 @@ bool WalkingModule::configure(yarp::os::ResourceFinder& rf)
     // resize variables
     m_qDesired.resize(m_robotControlHelper->getActuatedDoFs());
     m_dqDesired.resize(m_robotControlHelper->getActuatedDoFs());
-
+tempIMU=true;
+rollOffset=0;
+pitchOffset=0;
     yInfo() << "[WalkingModule::configure] Ready to play!";
 
     return true;
@@ -819,12 +823,16 @@ bool WalkingModule::updateModule()
         iDynTree::Rotation imuRotation=m_robotControlHelper->getIMUOreintation();
         iDynTree::Vector3 imuRPY= imuRotation.asRPY();
 
-
+if(tempIMU){
+rollOffset=(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0)));
+        pitchOffset=(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1)));
+    tempIMU=false;
+}
         iDynTree::Rotation pelvisOrientation;
                 pelvisOrientation=iDynTree::Rotation::Identity();
                 double miladTempP;
                  double miladTempR;
-                if ((abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1)))>0.000 ) {
+                if (abs((abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1)))-pitchOffset)>0.05 ) {
                     miladTempP=m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1);
 
                     //miladTemp=0;
@@ -833,7 +841,7 @@ bool WalkingModule::updateModule()
                     miladTempP=0;
                 }
 
-                if ( (abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0)))>0.000) {
+                if ( (abs(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0)))-rollOffset)>0.05) {
 
                     miladTempR=m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0);
                     //miladTemp=0;
@@ -843,14 +851,15 @@ bool WalkingModule::updateModule()
                 }
 
 
-               //pelvisOrientation=iDynTree::Rotation::RPY (miladTempR,miladTempP,0);
-
-
+               pelvisOrientation=iDynTree::Rotation::RPY (miladTempR,miladTempP,0);
+miladTempR=imuRPY(0);
+miladTempP=imuRPY(1);
+//pelvisOrientation=iDynTree::Rotation::Identity();
 
         runStepAdaptation(measuredZMP);
         if (!m_pushDetectedInStanceMode)
         {
-            runPushRecovery(measuredZMP);
+            runPushRecovery(measuredZMP,pelvisOrientation);
         }
 
 
@@ -1129,6 +1138,10 @@ bool WalkingModule::updateModule()
             m_earlyContactStabilizer->mapDesiredZMPToDesiredContactWrench(desiredZMP3D,m_leftInContact.front(),m_rightInContact.front(),totalMass,temp,m_leftTrajectory.front().getPosition(),m_rightTrajectory.front().getPosition());
 
             iDynTree::Vector3 forceZ;
+            iDynTree::Vector2 pelvisError;
+            pelvisError(0)=miladTempR;
+            pelvisError(1)=miladTempP;
+
             forceZ.zero();
             forceZ(0)=m_earlyContactStabilizer->getLeftFootMappedForce()(2);
             forceZ(1)=m_earlyContactStabilizer->getRightFootMappedForce()(2);
@@ -1144,7 +1157,7 @@ bool WalkingModule::updateModule()
                                       errorL, errorR,m_adaptedFootLeftTransform.getPosition(),m_adaptedFootRightTransform.getPosition(),m_FKSolver->getRootLinkToWorldTransform().getPosition(),m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY(),
                                       m_dcmEstimatedI,m_isPushActiveVec,m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY(),
                                       m_isRollPitchActiveVec,m_DCMPositionSmoothed,m_smoothedFootRightTransform.getPosition(),m_smoothedFootLeftTransform.getPosition(),m_smoothedFootLeftTwist.getLinearVec3(),m_leftTwistTrajectory.front().getLinearVec3(),m_adaptedFootLeftTwist.getLinearVec3(),
-                                      leftArmJointsError,rightArmJointsError,forceZ);
+                                      leftArmJointsError,rightArmJointsError,forceZ,pelvisError);
         }
 
         propagateTime();
@@ -1469,7 +1482,7 @@ bool WalkingModule::askNewTrajectories(const double& initTime, const bool& isLef
                     {
                     position(0)=m_outputStepAdaptation.adaptedFootLeftTransform.getPosition()(0);
                     }
-                    if(!leftTemp->addStep(position, 0, initTime+0.5+(i-1)*2))
+                    if(!leftTemp->addStep(position, 0, initTime+0.4))
                     {
                         yError() << "[WalkingModule::askNewTrajectories] unable to add left step";
                         return false;
@@ -1487,7 +1500,7 @@ bool WalkingModule::askNewTrajectories(const double& initTime, const bool& isLef
                     {
                     position(0)=m_outputStepAdaptation.adaptedFootLeftTransform.getPosition()(0);
                     }
-                    if(!rightTemp->addStep(position,0,initTime+(i)*1))
+                    if(!rightTemp->addStep(position,0,initTime+0.9))
                     {
                         yError() << "[WalkingModule::askNewTrajectories] unable to add right foot step";
                         return false;
@@ -1509,7 +1522,7 @@ bool WalkingModule::askNewTrajectories(const double& initTime, const bool& isLef
 
             }
             else {
-                yError()<<7474747<<"Nooooooo push not detected in stance mode";
+
             }
 
         }
@@ -1728,7 +1741,7 @@ bool WalkingModule::startWalking()
                                       "lf_des_dx", "lf_des_dy", "lf_des_dz",
                                       "lf_adapted_dx","lf_adapted_dy","lf_adapted_dz",
                                       "l_shoulder_pitch_err", "l_shoulder_roll_err", "l_shoulder_yaw_err", "l_elbow_err","left_joints_roll_err","left_joints_pitch_error",
-                                      "r_shoulder_pitch_err", "r_shoulder_roll_err", "r_shoulder_yaw_err", "r_elbow_err","right_joints_roll_err","right_joints_pitch_error","force_z_left","force_z_right","alpha_zmp_mapping"});
+                                      "r_shoulder_pitch_err", "r_shoulder_roll_err", "r_shoulder_yaw_err", "r_elbow_err","right_joints_roll_err","right_joints_pitch_error","force_z_left","force_z_right","alpha_zmp_mapping","pelvis_roll_error","pelvis_pitch_error"});
     }
 
     // if the robot was only prepared the filters has to be reseted
@@ -2018,7 +2031,7 @@ bool WalkingModule::runStepAdaptation(iDynTree::Vector2 measuredZMP)
                                                         m_leftInContact,m_rightInContact,m_robotControlHelper->getAxesList());
         m_isRollActive=m_stepAdapter->isArmRollActive();
         m_isPitchActive=m_stepAdapter->isArmPitchActive();
-        if(!m_stepAdapter->UpdateDCMEstimator(m_stableDCMModel->getCoMPosition(),m_stableDCMModel->getCoMVelocity(),measuredZMP,m_comHeightTrajectory.front()))
+        if(!m_stepAdapter->UpdateDCMEstimator(m_stableDCMModel->getCoMPosition(),m_stableDCMModel->getCoMVelocity(),measuredZMP,m_comHeightTrajectory.front(),iDynTree::Rotation::Identity()))
         {
             yError() << "[WalkingModule::updateModule] Unable to to recieve DCM from pendulumEstimator";
             return false;
@@ -2217,7 +2230,7 @@ bool WalkingModule::runStepAdaptation(iDynTree::Vector2 measuredZMP)
     return true;
 }
 
-bool WalkingModule::runPushRecovery(iDynTree::Vector2 measuredZMP)
+bool WalkingModule::runPushRecovery(iDynTree::Vector2 measuredZMP,iDynTree::Rotation pelvisRotation)
 {
     if (m_pushRecoveryInStanceMode)
     {
@@ -2227,9 +2240,9 @@ bool WalkingModule::runPushRecovery(iDynTree::Vector2 measuredZMP)
                                                         m_leftInContact,m_rightInContact,m_robotControlHelper->getAxesList());
         m_isRollActive=m_stepAdapter->isArmRollActive();
         m_isPitchActive=m_stepAdapter->isArmPitchActive();
-        yError() << "[WalkingModule::updateModule]"<<84774747;
+
         yError() << "[WalkingModule::updateModule]"<<m_isPitchActive<<m_isRollActive;
-        if(!m_stepAdapter->UpdateDCMEstimator(m_stableDCMModel->getCoMPosition(),m_stableDCMModel->getCoMVelocity(),measuredZMP,m_comHeightTrajectory.front()))
+        if(!m_stepAdapter->UpdateDCMEstimator(m_stableDCMModel->getCoMPosition(),m_stableDCMModel->getCoMVelocity(),measuredZMP,m_comHeightTrajectory.front(),pelvisRotation))
         {
             yError() << "[WalkingModule::updateModule] Unable to to recieve DCM from pendulumEstimator";
             return false;
@@ -2289,6 +2302,7 @@ bool WalkingModule::runPushRecovery(iDynTree::Vector2 measuredZMP)
         m_inputStepAdaptation.rightStepList=m_jRightstepList;
         m_inputStepAdaptation.rightInContact=m_rightInContact;
         m_inputStepAdaptation.rightFootprints=m_jRightFootprints;
+        m_inputStepAdaptation.pelvisRotation=pelvisRotation;
         //m_inputStepAdaptation.dcmSubTrajectories=m_DCMSubTrajectories;
         m_inputStepAdaptation.dcmPositionSmoothed=m_DCMPositionDesired.front();
 

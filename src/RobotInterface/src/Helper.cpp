@@ -132,8 +132,9 @@ bool RobotInterface::getFeedbacksRaw(unsigned int maxAttempts)
                     okPelvisIMU=true;
                 }
             }
+             yError()<<113344111111<<"milald"<<m_imuOrientation.asRPY()(0)<<m_imuOrientation.asRPY()(1)<<"imuActive";
         }
-
+ yError()<<m_usePelvisIMU<<"milald"<<m_imuOrientation.asRPY()(0)<<m_imuOrientation.asRPY()(1);
         if(okPosition && okVelocity && okLeftWrench && okRightWrench && okBaseEstimation && okPelvisIMU)
         {
             for(unsigned j = 0 ; j < m_actuatedDOFs; j++)
