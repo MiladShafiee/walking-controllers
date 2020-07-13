@@ -1499,8 +1499,10 @@ bool WalkingModule::askNewTrajectories(const double& initTime, const bool& isLef
                     if(i==1)
                     {
                     position(0)=m_outputStepAdaptation.adaptedFootLeftTransform.getPosition()(0);
+                    //m_outputStepAdaptation.adaptedFootLeftTransform.getPosition()(0)+0.5*(m_outputStepAdaptation.adaptedFootLeftTransform.getPosition()(0)-m_jRightFootprints->getSteps()[0].position(0));
+
                     }
-                    if(!rightTemp->addStep(position,0,initTime+0.7))
+                    if(!rightTemp->addStep(position,0,initTime+0.8))
                     {
                         yError() << "[WalkingModule::askNewTrajectories] unable to add right foot step";
                         return false;
@@ -1519,12 +1521,11 @@ bool WalkingModule::askNewTrajectories(const double& initTime, const bool& isLef
                     yError() << "[WalkingModule::askNewTrajectories] unable to generatempDCMInitialStatete new trajectorie after step adjustment.";
                     return false;
                 }
+            }
+            else
+            {
 
             }
-            else {
-
-            }
-
         }
         else
         {
