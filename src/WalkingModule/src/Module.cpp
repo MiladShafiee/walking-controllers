@@ -832,7 +832,7 @@ rollOffset=(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(
                 pelvisOrientation=iDynTree::Rotation::Identity();
                 double miladTempP;
                  double miladTempR;
-                if (abs((abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1)))-pitchOffset)>0.05 ) {
+                if (abs((abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1)))-pitchOffset)>0.17 ) {
                     miladTempP=m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(1)-imuRPY(1);
 
                     //miladTemp=0;
@@ -841,7 +841,7 @@ rollOffset=(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(
                     miladTempP=0;
                 }
 
-                if ( (abs(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0)))-rollOffset)>0.05) {
+                if ( (abs(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0)))-rollOffset)>0.08) {
 
                     miladTempR=m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(0)-imuRPY(0);
                     //miladTemp=0;
@@ -852,8 +852,8 @@ rollOffset=(abs(m_FKSolver->getRootLinkToWorldTransform().getRotation().asRPY()(
 
 
                pelvisOrientation=iDynTree::Rotation::RPY (miladTempR,miladTempP,0);
-miladTempR=imuRPY(0);
-miladTempP=imuRPY(1);
+//miladTempR=imuRPY(0);
+//miladTempP=imuRPY(1);
 //pelvisOrientation=iDynTree::Rotation::Identity();
 
         runStepAdaptation(measuredZMP);
@@ -1500,7 +1500,7 @@ bool WalkingModule::askNewTrajectories(const double& initTime, const bool& isLef
                     {
                     position(0)=m_outputStepAdaptation.adaptedFootLeftTransform.getPosition()(0);
                     }
-                    if(!rightTemp->addStep(position,0,initTime+0.9))
+                    if(!rightTemp->addStep(position,0,initTime+0.7))
                     {
                         yError() << "[WalkingModule::askNewTrajectories] unable to add right foot step";
                         return false;
